@@ -1,7 +1,7 @@
 {
-  "name": "cymbaline",
+  "name": "test-app",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/cymbaline/src",
+  "sourceRoot": "apps/test/src",
   "projectType": "application",
   "tags": [],
   "targets": {
@@ -11,12 +11,12 @@
       "defaultConfiguration": "production",
       "options": {
         "platform": "node",
-        "outputPath": "dist/apps/cymbaline",
+        "outputPath": "dist/apps/test",
         "format": ["cjs"],
         "bundle": false,
-        "main": "apps/cymbaline/src/main.ts",
-        "tsConfig": "apps/cymbaline/tsconfig.app.json",
-        "assets": ["apps/cymbaline/src/assets"],
+        "main": "apps/test/src/main.ts",
+        "tsConfig": "apps/test/tsconfig.app.json",
+        "assets": ["apps/test/src/assets"],
         "generatePackageJson": true,
         "esbuildOptions": {
           "sourcemap": true,
@@ -42,17 +42,18 @@
       "defaultConfiguration": "development",
       "dependsOn": ["build"],
       "options": {
-        "buildTarget": "cymbaline:build",
+        "buildTarget": "test-app:build",
         "runBuildTargetDependencies": false
       },
       "configurations": {
         "development": {
-          "buildTarget": "cymbaline:build:development"
+          "buildTarget": "test-app:build:development"
         },
         "production": {
-          "buildTarget": "cymbaline:build:production"
+          "buildTarget": "test-app:build:production"
         }
       }
     }
-  }
+  },
+  "implicitDependencies": ["logger", "server-reflection"]
 }

@@ -14,7 +14,11 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@cymbaline/core": ["libs/core/src/index.ts"],
+      "@cymbaline/logger": ["libs/logger/src/index.ts"],
+      "@cymbaline/server-reflection": ["libs/server-reflection/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }

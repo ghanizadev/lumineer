@@ -1,6 +1,6 @@
 /* eslint-disable */
 export default {
-  displayName: 'cymbaline-e2e',
+  displayName: 'test-app-e2e',
   preset: '../../jest.preset.js',
   setupFiles: ['<rootDir>/src/test-setup.ts'],
   testEnvironment: 'node',
@@ -13,5 +13,5 @@ export default {
     ],
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
-  coverageDirectory: '../../coverage/cymbaline-e2e',
+  coverageDirectory: '../../coverage/test-app-e2e',
 };

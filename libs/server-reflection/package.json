@@ -1,0 +1,8 @@
+{
+  "name": "@cymbaline/server-reflection",
+  "version": "0.0.1",
+  "dependencies": {
+    "@cymbaline/logger": "^0.0.1",
+    "@cymbaline/core": "^0.0.1"
+  }
+}

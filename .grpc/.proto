@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package app;
+
+service ServiceModule {
+    rpc sayHello (sayHello_Arguments) returns (sayHello_Returns) {}
+    rpc pingPong (pingPong_Arguments) returns (pingPong_Returns) {}
+}
+
+message sayHello_Arguments {
+    string name = 1;
+}
+
+message sayHello_Returns {
+    optional string status = 1;
+    optional string message = 2;
+}
+
+message pingPong_Arguments {
+    optional string message = 1;
+}
+
+message pingPong_Returns {
+    optional string pong = 1;
+    optional int32 randomNumber = 2;
+}
+
+service ServiceWithAReallyLongNameIndeed {
+    rpc sayHi (sayHi_Arguments) returns (sayHi_Returns) {}
+}
+
+message sayHi_Arguments {
+    string name = 1;
+}
+
+message sayHi_Returns {
+    optional string status = 1;
+    optional string message = 2;
+}

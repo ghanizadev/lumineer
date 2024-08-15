@@ -1,0 +1,34 @@
+{
+  "name": "server-reflection",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/server-reflection/src",
+  "projectType": "library",
+  "release": {
+    "version": {
+      "generatorOptions": {
+        "packageRoot": "dist/{projectRoot}",
+        "currentVersionResolver": "git-tag"
+      }
+    }
+  },
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/server-reflection",
+        "tsConfig": "libs/server-reflection/tsconfig.lib.json",
+        "packageJson": "libs/server-reflection/package.json",
+        "main": "libs/server-reflection/src/index.ts",
+        "assets": ["libs/server-reflection/*.md"]
+      }
+    },
+    "nx-release-publish": {
+      "options": {
+        "packageRoot": "dist/{projectRoot}"
+      }
+    }
+  },
+  "implicitDependencies": ["core"]
+}
