@@ -18,6 +18,7 @@ import {
   SERVICE_RPC_TOKEN,
   SERVICE_TOKEN,
 } from './constants';
+import { add } from 'lodash';
 
 type ServiceType = { new (...args: any[]): {} };
 
@@ -42,9 +43,10 @@ const DEFAULT_OPTIONS: Partial<GRPCServerOptions> = {
 };
 
 type HandlerData = {
-  middlewares: MiddlewareHandler[];
   data: any;
   metadata: any;
+  call: any;
+  callback: (err: any, response?: any) => Promise<void> | void;
 };
 
 export class GRPCServer {
@@ -199,11 +201,15 @@ export class GRPCServer {
           call: any,
           callback: any
         ) => {
-          await this.makeHandler(call, callback, {
-            middlewares,
-            data,
-            metadata,
-          });
+          await this.makeHandler(
+            {
+              data,
+              metadata,
+              call,
+              callback,
+            },
+            middlewares
+          );
         };
 
         serviceImplementations[metadata.propertyKey] = handler.bind(this);
@@ -240,8 +246,11 @@ export class GRPCServer {
     return middleware;
   }
 
-  private async makeHandler(call: any, callback: any, additional: HandlerData) {
-    const { middlewares, data, metadata } = additional;
+  private async makeHandler(
+    context: HandlerData,
+    middlewares: MiddlewareHandler[]
+  ) {
+    const { data, metadata, call, callback } = context;
 
     const start = performance.now();
 
@@ -249,6 +258,7 @@ export class GRPCServer {
       for (const mw of middlewares) {
         await mw.call(mw, this.makeMiddlewareContext(call));
       }
+
       const args = this.makeArguments(
         call,
         data.instance,
@@ -257,46 +267,162 @@ export class GRPCServer {
 
       const fn = data.instance[metadata.propertyKey].bind(data.instance);
 
-      if (metadata.returnType.metadata.stream) {
-        if (fn.constructor.name.includes('GeneratorFunction')) {
-          for await (const response of fn(...args)) {
-            call.write(response);
-          }
-        } else {
-          Promise.resolve(fn(...args))
-            .then(() => {
-              const end = performance.now();
-              this.logger.info(
-                `RPC to ${data.name}.${metadata.propertyKey} done in ${(
-                  end - start
-                ).toFixed(3)}ms`
-              );
-            })
-            .catch((e) => {
-              this.logger.error(
-                `RPC to ${data.name}.${metadata.propertyKey} failed: ${e}`
-              );
-
-              call.emit('error', { code: gRPC.status.INTERNAL });
-            });
-        }
-      } else {
-        const response = await Promise.resolve(fn(...args));
-        callback(null, response);
-
-        const end = performance.now();
-        this.logger.info(
-          `RPC to ${data.name}.${metadata.propertyKey} done in ${(
-            end - start
-          ).toFixed(3)}ms`
-        );
+      switch (this.getRequestType(metadata)) {
+        case 'bidirectionalStream':
+          await this.handleBidirectionalStreamingCall(fn, args, context);
+          break;
+        case 'clientStream':
+          await this.handleClientStreamingCall(fn, args, context);
+          break;
+        case 'serverStream':
+          await this.handleServerStreamingCall(fn, args, context);
+          break;
+        case 'unary':
+          await this.handleUnaryCall(fn, args, context);
+          break;
       }
+
+      const end = performance.now();
+
+      this.logger.info(
+        `RPC to ${data.name}.${metadata.propertyKey} done in ${(
+          end - start
+        ).toFixed(3)}ms`
+      );
     } catch (e) {
       if (callback) {
         callback(e);
       } else {
         call.emit('error', { status: gRPC.status.INTERNAL });
       }
+      this.logger.error(
+        `RPC to ${data.name}.${metadata.propertyKey} failed: ${e}`
+      );
+    }
+  }
+
+  private getRequestType(serviceMetadata: any) {
+    if (serviceMetadata.returnType.metadata.stream) {
+      if (serviceMetadata.inputType.metadata.stream)
+        return 'bidirectionalStream';
+
+      return 'serverStream';
+    }
+
+    if (serviceMetadata.inputType.metadata.stream) return 'clientStream';
+
+    return 'unary';
+  }
+
+  private async handleBidirectionalStreamingCall(
+    fn: any,
+    args: any[],
+    context: HandlerData
+  ) {
+    const { call, data, metadata } = context;
+
+    try {
+      call.on('data', async (chunk: any) => {
+        const argMetadata = Reflect.getMetadata(
+          SERVICE_RPC_ARGS_TOKEN,
+          data.instance,
+          metadata.propertyKey
+        );
+
+        let bodyIndex = -1;
+
+        for (const key in argMetadata) {
+          if (argMetadata[key].type === 'body') {
+            bodyIndex = +key;
+            break;
+          }
+        }
+
+        if (bodyIndex !== -1) {
+          let updatedArgs = [...args];
+          updatedArgs[bodyIndex] = chunk;
+          fn(...updatedArgs);
+        }
+      });
+    } catch (e) {
+      call.emit('error', { code: gRPC.status.INTERNAL, message: e.message });
+      this.logger.error(
+        `RPC to ${data.name}.${metadata.propertyKey} failed: ${e}`
+      );
+    }
+  }
+
+  private async handleServerStreamingCall(
+    fn: any,
+    args: any[],
+    context: HandlerData
+  ) {
+    const { call, metadata, data } = context;
+
+    try {
+      if (fn.constructor.name.includes('GeneratorFunction')) {
+        for await (const response of fn(...args)) {
+          call.write(response);
+        }
+        call.end();
+      } else {
+        await Promise.resolve(fn(...args));
+      }
+    } catch (e) {
+      this.logger.error(
+        `RPC to ${data.name}.${metadata.propertyKey} failed: ${e}`
+      );
+      call.emit('error', { code: gRPC.status.INTERNAL });
+    }
+  }
+
+  private async handleClientStreamingCall(
+    fn: any,
+    args: any[],
+    context: HandlerData
+  ) {
+    const { callback, call, data, metadata } = context;
+    try {
+      call.on('data', async (chunk: any) => {
+        const argMetadata = Reflect.getMetadata(
+          SERVICE_RPC_ARGS_TOKEN,
+          data.instance,
+          metadata.propertyKey
+        );
+
+        let bodyIndex = -1;
+
+        for (const key in argMetadata) {
+          if (argMetadata[key].type === 'body') {
+            bodyIndex = +key;
+            break;
+          }
+        }
+
+        if (bodyIndex !== -1) {
+          let updatedArgs = [...args];
+          updatedArgs[bodyIndex] = chunk;
+          const response = await Promise.resolve(fn(...updatedArgs));
+          if (response) {
+            callback(null, response);
+          }
+        }
+      });
+    } catch (e) {
+      callback(e);
+      this.logger.error(
+        `RPC to ${data.name}.${metadata.propertyKey} failed: ${e}`
+      );
+    }
+  }
+
+  private async handleUnaryCall(fn: any, args: any[], context: HandlerData) {
+    const { callback, metadata, data } = context;
+    try {
+      const response = await Promise.resolve(fn(...args));
+      callback(null, response);
+    } catch (e) {
+      callback(e);
       this.logger.error(
         `RPC to ${data.name}.${metadata.propertyKey} failed: ${e}`
       );

@@ -40,22 +40,32 @@ export const EnumType = (options: InputTypeOptions = {}) => {
   };
 };
 
-export const PropertyType =
-  <T = any>(type: string) =>
+const propertyTypeDecorator =
+  <T = any>(
+    type: string,
+    transform?: <U = any>(
+      metadataValue: U,
+      options: PropertyTypeOptions & T
+    ) => U
+  ) =>
   (options?: PropertyTypeOptions & T) => {
     return (target: any, propertyKey: string) => {
+      const metadata = { type, propertyKey, ...(options ?? {}) };
       Reflect.defineMetadata(
         PROPERTY_TYPE_TOKEN + propertyKey,
-        { type, propertyKey, ...(options ?? {}) },
+        transform ? transform(metadata, options) : metadata,
         target
       );
     };
   };
 
-export const StringPropertyType = PropertyType('string');
+export const StringPropertyType = propertyTypeDecorator('string');
 
-export const NumberPropertyType = PropertyType<PropertyNumberOption>('number');
+export const BooleanPropertyType = propertyTypeDecorator('bool');
 
-export const BooleanPropertyType = PropertyType('bool');
+export const BytesPropertyType = propertyTypeDecorator('bytes');
 
-export const BytesPropertyType = PropertyType('bytes');
+export const NumberPropertyType = propertyTypeDecorator<PropertyNumberOption>(
+  'number',
+  (metadata, options) => ({ ...metadata, type: options?.type ?? 'int32' })
+);

@@ -22,6 +22,8 @@ import {
   logger.info('service middleware');
 })
 export class ServiceModule {
+  private data: PingRequest[] = [];
+
   constructor(@InjectLogger() private readonly logger: Logger) {}
 
   @RPC()
@@ -44,26 +46,21 @@ export class ServiceModule {
   @ReturnType(PingResponse)
   @ArgumentType(PingRequest)
   private async pingPong(
-    @BodyParam() body: any,
+    @BodyParam() body: PingRequest,
     @StreamParam() stream: Duplex
   ) {
-    const data: PingRequest[] = [];
+    this.data.push(body);
+    this.logger.info('Received: ' + this.data.length);
 
-    console.log({ stream, body });
+    if (this.data.length > 5) {
+      this.data.forEach((d) => {
+        this.logger.info(d.message);
+      });
 
-    stream.on('data', (chunk: any) => {
-      data.push(chunk);
-
-      this.logger.info('Received: ' + data.length);
-
-      if (data.length > 5) {
-        return {
-          pong: 'pong',
-          randomNumber: Math.floor(Math.random() * 10000),
-        };
-      }
-    });
-
-    await new Promise((res) => setTimeout(res, 15000));
+      return {
+        pong: 'pong',
+        randomNumber: Math.floor(Math.random() * 10000),
+      };
+    }
   }
 }

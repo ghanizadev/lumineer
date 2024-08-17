@@ -1,4 +1,9 @@
-import { MessageType, StringPropertyType } from '@cymbaline/core';
+import {
+  MessageType,
+  NumberPropertyType,
+  StreamMessageType,
+  StringPropertyType,
+} from '@cymbaline/core';
 
 @MessageType()
 export class InputMessageType {
@@ -13,4 +18,19 @@ export class ReturnMessageType {
 
   @StringPropertyType()
   message: string;
+}
+
+@StreamMessageType()
+export class StreamInputType {
+  @StringPropertyType()
+  helloStream: string;
+}
+
+@StreamMessageType()
+export class StreamReturnType {
+  @NumberPropertyType()
+  status: number;
+
+  @StringPropertyType()
+  message: number;
 }
