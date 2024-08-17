@@ -6,13 +6,13 @@ import {
 } from '@cymbaline/core';
 
 @MessageType()
-export class InputType {
+export class InputMessageType {
   @StringPropertyType({ required: true })
   name: string;
 }
 
 @StreamMessageType()
-export class ReturnType {
+export class ReturnMessageType {
   @StringPropertyType()
   status: string;
 

@@ -127,8 +127,6 @@ export class GRPCServer {
       if (args[i]) {
         const { type } = args[i];
 
-        console.log(call.stream);
-
         switch (type) {
           case 'body':
             result[i] = call.request;

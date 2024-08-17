@@ -1,13 +1,13 @@
 import { MessageType, StringPropertyType } from '@cymbaline/core';
 
 @MessageType()
-export class InputType {
+export class InputMessageType {
   @StringPropertyType({ required: true })
   name: string;
 }
 
 @MessageType()
-export class ReturnType {
+export class ReturnMessageType {
   @StringPropertyType()
   status: string;
 

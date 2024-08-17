@@ -1,14 +1,21 @@
 import {
+  ArgumentType,
   BodyParam,
   InjectLogger,
   Middleware,
+  ReturnType,
   RPC,
   Service,
   StreamParam,
 } from '@cymbaline/core';
 import { Logger } from '@cymbaline/logger';
 import { Writable, Readable, Duplex } from 'stream';
-import { InputType, PingRequest, PingResponse, ReturnType } from './dto';
+import {
+  InputMessageType,
+  PingRequest,
+  PingResponse,
+  ReturnMessageType,
+} from './dto';
 
 @Service()
 @Middleware(({ logger }) => {
@@ -17,9 +24,11 @@ import { InputType, PingRequest, PingResponse, ReturnType } from './dto';
 export class ServiceModule {
   constructor(@InjectLogger() private readonly logger: Logger) {}
 
-  @RPC(ReturnType)
+  @RPC()
+  @ReturnType(ReturnMessageType)
+  @ArgumentType(InputMessageType)
   private async sayHello(
-    @BodyParam(InputType) body: InputType,
+    @BodyParam() body: InputMessageType,
     @StreamParam() stream: Writable
   ) {
     for (let i = 0; i < 3; i++) {
@@ -32,15 +41,21 @@ export class ServiceModule {
   }
 
   @RPC(PingResponse)
+  @ReturnType(PingResponse)
+  @ArgumentType(PingRequest)
   private async pingPong(
-    @BodyParam(PingRequest) body: any,
+    @BodyParam() body: any,
     @StreamParam() stream: Duplex
   ) {
     const data: PingRequest[] = [];
+
     console.log({ stream, body });
+
     stream.on('data', (chunk: any) => {
       data.push(chunk);
+
       this.logger.info('Received: ' + data.length);
+
       if (data.length > 5) {
         return {
           pong: 'pong',
