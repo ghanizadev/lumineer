@@ -2,7 +2,7 @@
   "name": "test-app-e2e",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
-  "implicitDependencies": ["test-app"],
+  "implicitDependencies": ["example"],
   "targets": {
     "e2e": {
       "executor": "@nx/jest:jest",
@@ -11,7 +11,7 @@
         "jestConfig": "apps/test-e2e/jest.config.ts",
         "passWithNoTests": true
       },
-      "dependsOn": ["test-app:build"]
+      "dependsOn": ["example-app:build"]
     }
   }
 }

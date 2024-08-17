@@ -13,7 +13,6 @@ import {
   MiddlewareHandler,
 } from './types';
 import {
-  LOGGER_TOKEN,
   SERVICE_MIDDLEWARE_TOKEN,
   SERVICE_RPC_ARGS_TOKEN,
   SERVICE_RPC_TOKEN,

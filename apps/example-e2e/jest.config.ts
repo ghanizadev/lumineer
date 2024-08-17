@@ -1,8 +1,8 @@
 /* eslint-disable */
 export default {
-  displayName: 'test-app-e2e',
+  displayName: 'example-e2e',
   preset: '../../jest.preset.js',
-  setupFiles: ['<rootDir>/src/test-setup.ts'],
+  setupFiles: ['<rootDir>/src/setup.ts'],
   testEnvironment: 'node',
   transform: {
     '^.+\\.[tj]s$': [
@@ -13,5 +13,5 @@ export default {
     ],
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
-  coverageDirectory: '../../coverage/test-app-e2e',
+  coverageDirectory: '../../coverage/example-e2e',
 };

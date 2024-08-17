@@ -13,7 +13,7 @@ export class Logger {
     private readonly contextColor: typeof BackgroundColor = 'bgBlue',
     options?: { contextWidth?: number }
   ) {
-    if (options.contextWidth) this.contextWidth = options.contextWidth;
+    if (options?.contextWidth) this.contextWidth = options.contextWidth;
 
     if (context.length > this.contextWidth) {
       this.context = context.substring(0, this.contextWidth - 2) + '..';

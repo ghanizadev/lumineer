@@ -1,9 +1,10 @@
 {
-  "name": "test-app",
+  "name": "example",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/test/src",
+  "sourceRoot": "apps/example/src",
   "projectType": "application",
   "tags": [],
+  "implicitDependencies": ["logger", "server-reflection"],
   "targets": {
     "build": {
       "executor": "@nx/esbuild:esbuild",
@@ -11,12 +12,12 @@
       "defaultConfiguration": "production",
       "options": {
         "platform": "node",
-        "outputPath": "dist/apps/test",
+        "outputPath": "dist/apps/example",
         "format": ["cjs"],
         "bundle": false,
-        "main": "apps/test/src/main.ts",
-        "tsConfig": "apps/test/tsconfig.app.json",
-        "assets": ["apps/test/src/assets"],
+        "main": "apps/example/src/main.ts",
+        "tsConfig": "apps/example/tsconfig.app.json",
+        "assets": ["apps/example/src/assets"],
         "generatePackageJson": true,
         "esbuildOptions": {
           "sourcemap": true,
@@ -42,18 +43,17 @@
       "defaultConfiguration": "development",
       "dependsOn": ["build"],
       "options": {
-        "buildTarget": "test-app:build",
+        "buildTarget": "example:build",
         "runBuildTargetDependencies": false
       },
       "configurations": {
         "development": {
-          "buildTarget": "test-app:build:development"
+          "buildTarget": "example:build:development"
         },
         "production": {
-          "buildTarget": "test-app:build:production"
+          "buildTarget": "example:build:production"
         }
       }
     }
-  },
-  "implicitDependencies": ["logger", "server-reflection"]
+  }
 }
