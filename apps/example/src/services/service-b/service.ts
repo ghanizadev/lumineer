@@ -1,4 +1,4 @@
-import { BodyContent, Metadata, RPC, Service } from '@cymbaline/core';
+import { BodyParam, Metadata, RPC, Service } from '@cymbaline/core';
 import { InputType, ReturnType } from './dto';
 import { autoInjectable } from 'tsyringe';
 import { Logger } from '@cymbaline/logger';
@@ -10,7 +10,7 @@ export class ServiceWithAReallyLongNameIndeed {
 
   @RPC(ReturnType)
   private async sayHi(
-    @BodyContent(InputType) body: InputType,
+    @BodyParam(InputType) body: InputType,
     @Metadata() metadata: any
   ) {
     this.logger.warn(JSON.stringify(metadata));

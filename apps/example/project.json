@@ -41,7 +41,7 @@
     "serve": {
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
-      "dependsOn": ["build"],
+      "dependsOn": ["build", "core:build", "logger:build", "server-reflection:build"],
       "options": {
         "buildTarget": "example:build",
         "runBuildTargetDependencies": false

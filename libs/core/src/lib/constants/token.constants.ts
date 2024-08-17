@@ -5,3 +5,5 @@ export const SERVICE_RPC_TOKEN = 'service:rpc:';
 export const SERVICE_RPC_ARGS_TOKEN = 'service:rpc:args:';
 
 export const SERVICE_MIDDLEWARE_TOKEN = 'service:middleware';
+
+export const PROPERTY_TYPE_TOKEN = 'property-type:';

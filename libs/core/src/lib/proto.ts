@@ -1,6 +1,6 @@
 import * as path from 'node:path';
 import * as fs from 'node:fs';
-import { SERVICE_RPC_TOKEN } from './constants';
+import { PROPERTY_TYPE_TOKEN, SERVICE_RPC_TOKEN } from './constants';
 
 export class ProtoGenerator {
   constructor(
@@ -24,9 +24,12 @@ export class ProtoGenerator {
         const metadata = Reflect.getMetadata(key, instance);
 
         handlerMetadata.push(metadata);
-
         file.push(
-          `    rpc ${metadata.propertyKey} (${metadata.propertyKey}_Arguments) returns (${metadata.propertyKey}_Returns) {}`
+          `    rpc ${metadata.propertyKey} (${
+            metadata.inputType?.metadata?.stream ? 'stream ' : ''
+          }${metadata.propertyKey}_Arguments) returns (${
+            metadata.returnType?.metadata?.stream ? 'stream ' : ''
+          }${metadata.propertyKey}_Returns) {}`
         );
       }
 
@@ -38,11 +41,15 @@ export class ProtoGenerator {
         if (metadata.inputType) {
           let i = 0;
           for (const key in metadata.inputType) {
+            if (!key.startsWith(PROPERTY_TYPE_TOKEN)) continue;
+
             const property = metadata.inputType[key];
+            const propertyName = property.propertyKey;
+
             file.push(
               `    ${property.required ? '' : 'optional '}${
                 property.type
-              } ${key} = ${++i};`
+              } ${propertyName} = ${++i};`
             );
           }
         }
@@ -54,11 +61,15 @@ export class ProtoGenerator {
         if (metadata.returnType) {
           let i = 0;
           for (const key in metadata.returnType) {
+            if (!key.startsWith(PROPERTY_TYPE_TOKEN)) continue;
+
             const property = metadata.returnType[key];
+            const propertyName = property.propertyKey;
+
             file.push(
               `    ${property.required ? '' : 'optional '}${
                 property.type
-              } ${key} = ${++i};`
+              } ${propertyName} = ${++i};`
             );
           }
         }

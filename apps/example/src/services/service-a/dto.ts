@@ -1,6 +1,7 @@
 import {
   MessageType,
   NumberPropertyType,
+  StreamMessageType,
   StringPropertyType,
 } from '@cymbaline/core';
 
@@ -10,7 +11,7 @@ export class InputType {
   name: string;
 }
 
-@MessageType()
+@StreamMessageType()
 export class ReturnType {
   @StringPropertyType()
   status: string;
@@ -19,7 +20,7 @@ export class ReturnType {
   message: string;
 }
 
-@MessageType()
+@MessageType({ stream: true })
 export class PingRequest {
   @StringPropertyType()
   message: string;

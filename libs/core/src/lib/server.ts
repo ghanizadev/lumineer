@@ -41,11 +41,11 @@ const DEFAULT_OPTIONS: Partial<GRPCServerOptions> = {
   },
 };
 
-export class Test {
-  constructor() {
-    console.log('test here');
-  }
-}
+type HandlerData = {
+  middlewares: MiddlewareHandler[];
+  data: any;
+  metadata: any;
+};
 
 export class GRPCServer {
   private readonly services: Record<string, any> = {};
@@ -127,12 +127,17 @@ export class GRPCServer {
       if (args[i]) {
         const { type } = args[i];
 
+        console.log(call.stream);
+
         switch (type) {
           case 'body':
             result[i] = call.request;
             break;
           case 'metadata':
             result[i] = call.metadata;
+            break;
+          case 'stream':
+            result[i] = call;
             break;
           default:
             break;
@@ -196,35 +201,11 @@ export class GRPCServer {
           call: any,
           callback: any
         ) => {
-          const start = performance.now();
-
-          try {
-            for (const mw of middlewares) {
-              await mw.call(mw, this.makeMiddlewareContext(call));
-            }
-            const args = this.makeArguments(
-              call,
-              data.instance,
-              metadata.propertyKey
-            );
-            const response = await Promise.resolve(
-              data.instance[metadata.propertyKey].call(data.instance, ...args)
-            );
-
-            callback(null, response);
-
-            const end = performance.now();
-            this.logger.info(
-              `RPC to ${data.name}.${metadata.propertyKey} done in ${(
-                end - start
-              ).toFixed(3)}ms`
-            );
-          } catch (e) {
-            callback(e);
-            this.logger.error(
-              `RPC to ${data.name}.${metadata.propertyKey} failed: ${e}`
-            );
-          }
+          await this.makeHandler(call, callback, {
+            middlewares,
+            data,
+            metadata,
+          });
         };
 
         serviceImplementations[metadata.propertyKey] = handler.bind(this);
@@ -259,5 +240,68 @@ export class GRPCServer {
     } catch {}
 
     return middleware;
+  }
+
+  private async makeHandler(call: any, callback: any, additional: HandlerData) {
+    const { middlewares, data, metadata } = additional;
+
+    const start = performance.now();
+
+    try {
+      for (const mw of middlewares) {
+        await mw.call(mw, this.makeMiddlewareContext(call));
+      }
+      const args = this.makeArguments(
+        call,
+        data.instance,
+        metadata.propertyKey
+      );
+
+      const fn = data.instance[metadata.propertyKey].bind(data.instance);
+
+      if (metadata.returnType.metadata.stream) {
+        if (fn.constructor.name.includes('GeneratorFunction')) {
+          for await (const response of fn(...args)) {
+            call.write(response);
+          }
+        } else {
+          Promise.resolve(fn(...args))
+            .then(() => {
+              const end = performance.now();
+              this.logger.info(
+                `RPC to ${data.name}.${metadata.propertyKey} done in ${(
+                  end - start
+                ).toFixed(3)}ms`
+              );
+            })
+            .catch((e) => {
+              this.logger.error(
+                `RPC to ${data.name}.${metadata.propertyKey} failed: ${e}`
+              );
+
+              call.emit('error', { code: gRPC.status.INTERNAL });
+            });
+        }
+      } else {
+        const response = await Promise.resolve(fn(...args));
+        callback(null, response);
+
+        const end = performance.now();
+        this.logger.info(
+          `RPC to ${data.name}.${metadata.propertyKey} done in ${(
+            end - start
+          ).toFixed(3)}ms`
+        );
+      }
+    } catch (e) {
+      if (callback) {
+        callback(e);
+      } else {
+        call.emit('error', { status: gRPC.status.INTERNAL });
+      }
+      this.logger.error(
+        `RPC to ${data.name}.${metadata.propertyKey} failed: ${e}`
+      );
+    }
   }
 }

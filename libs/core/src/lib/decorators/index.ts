@@ -5,3 +5,4 @@ export * from './body.decorator';
 export * from './metadata.decorator';
 export * from './middleware.decorator';
 export * from './common.decorator';
+export * from './stream.decorator';

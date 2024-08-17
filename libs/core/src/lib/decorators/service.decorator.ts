@@ -9,9 +9,5 @@ export const Service = () => {
       constructor
     );
     return injectable()(constructor);
-
-    // // @autoInjectable()
-    // class serviceClass extends constructor {}
-    // return serviceClass;
   };
 };

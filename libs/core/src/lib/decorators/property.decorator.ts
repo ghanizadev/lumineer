@@ -1,32 +1,56 @@
+import { PROPERTY_TYPE_TOKEN } from '../constants';
+
 export type PropertyTypeOptions = {
-    required?: boolean;
+  required?: boolean;
 };
 
 export type PropertyNumberOption = {
-    type: 'int32' | 'int64' | 'double' | 'float';
+  type: 'int32' | 'int64' | 'double' | 'float';
 };
 
 export type InputTypeOptions = PropertyTypeOptions & { stream?: boolean };
 
 export const MessageType = (options: InputTypeOptions = {}) => {
-    return (constructor: { new (...args: any[]): {} }) => {
-        Reflect.defineMetadata('type', { type: 'message', name: constructor.name, ...options }, constructor);
-    };
+  return (constructor: { new (...args: any[]): {} }) => {
+    Reflect.defineMetadata(
+      'type',
+      { type: 'message', name: constructor.name, ...options },
+      constructor
+    );
+  };
+};
+
+export const StreamMessageType = (options: InputTypeOptions = {}) => {
+  return (constructor: { new (...args: any[]): {} }) => {
+    Reflect.defineMetadata(
+      'type',
+      { type: 'message', stream: true, name: constructor.name, ...options },
+      constructor
+    );
+  };
 };
 
 export const EnumType = (options: InputTypeOptions = {}) => {
-    return (constructor: { new (...args: any[]): {} }) => {
-        Reflect.defineMetadata('type', { type: 'message', name: constructor.name, ...options }, constructor);
-    };
+  return (constructor: { new (...args: any[]): {} }) => {
+    Reflect.defineMetadata(
+      'type',
+      { type: 'enum', name: constructor.name, ...options },
+      constructor
+    );
+  };
 };
 
 export const PropertyType =
-    <T = any>(type: string) =>
-    (options?: PropertyTypeOptions & T) => {
-        return (target: any, propertyKey: string) => {
-            Reflect.defineMetadata(propertyKey, { type, ...(options ?? {}) }, target);
-        };
+  <T = any>(type: string) =>
+  (options?: PropertyTypeOptions & T) => {
+    return (target: any, propertyKey: string) => {
+      Reflect.defineMetadata(
+        PROPERTY_TYPE_TOKEN + propertyKey,
+        { type, propertyKey, ...(options ?? {}) },
+        target
+      );
     };
+  };
 
 export const StringPropertyType = PropertyType('string');
 

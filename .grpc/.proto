@@ -3,8 +3,8 @@ syntax = "proto3";
 package app;
 
 service ServiceModule {
-    rpc sayHello (sayHello_Arguments) returns (sayHello_Returns) {}
-    rpc pingPong (pingPong_Arguments) returns (pingPong_Returns) {}
+    rpc sayHello (sayHello_Arguments) returns (stream sayHello_Returns) {}
+    rpc pingPong (stream pingPong_Arguments) returns (pingPong_Returns) {}
 }
 
 message sayHello_Arguments {

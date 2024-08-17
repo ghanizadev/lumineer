@@ -1,7 +1,8 @@
 import { SERVICE_RPC_TOKEN } from '../constants';
+import _ = require('lodash');
 
 export type RPCOptions = {
-  stream?: boolean;
+  returnsStream?: boolean;
 };
 
 export const RPC = (
@@ -16,18 +17,18 @@ export const RPC = (
 
     const type: any = new returnType();
 
+    const returnTypeMetadata = Reflect.getMetadata('type', returnType);
     const reflectKeys = Reflect.getMetadataKeys(type);
 
     for (const key of reflectKeys) {
       const value = Reflect.getMetadata(key, type);
 
-      metadata = {
-        ...metadata,
+      metadata = _.merge(metadata, {
         returnType: {
-          ...(metadata.returnType ?? {}),
+          metadata: returnTypeMetadata,
           [key]: value,
         },
-      };
+      });
     }
 
     Reflect.defineMetadata(SERVICE_RPC_TOKEN + propertyKey, metadata, target);
