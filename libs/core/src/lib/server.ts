@@ -15,10 +15,9 @@ import {
 import {
   SERVICE_MIDDLEWARE_TOKEN,
   SERVICE_RPC_ARGS_TOKEN,
-  SERVICE_RPC_TOKEN,
+  SERVICE_SERVER_RPC_TOKEN,
   SERVICE_TOKEN,
 } from './constants';
-import { add } from 'lodash';
 
 type ServiceType = { new (...args: any[]): {} };
 
@@ -186,7 +185,7 @@ export class GRPCServer {
       const serviceImplementations: gRPC.UntypedServiceImplementation = {};
 
       for (const key of Reflect.getMetadataKeys(data.instance)) {
-        if (!key.startsWith(SERVICE_RPC_TOKEN)) continue;
+        if (!key.startsWith(SERVICE_SERVER_RPC_TOKEN)) continue;
 
         const metadata = Reflect.getMetadata(key, data.instance);
         const instanceMiddlewares =

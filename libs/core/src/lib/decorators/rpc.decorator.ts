@@ -1,23 +1,30 @@
-import { SERVICE_RPC_TOKEN } from '../constants';
+import { SERVICE_SERVER_RPC_TOKEN } from '../constants';
 import _ = require('lodash');
 
 export type RPCOptions = {};
 
 export type RPCArgumentType = {};
 
-export const RPC = (options: RPCOptions = {}) => {
+export const RPCServerFunction = (options: RPCOptions = {}) => {
   return (target: any, propertyKey: string) => {
     let metadata: any =
-      Reflect.getMetadata(SERVICE_RPC_TOKEN + propertyKey, target) ?? {};
+      Reflect.getMetadata(SERVICE_SERVER_RPC_TOKEN + propertyKey, target) ?? {};
     metadata = { ...metadata, propertyKey, ...(options ?? {}) };
-    Reflect.defineMetadata(SERVICE_RPC_TOKEN + propertyKey, metadata, target);
+    Reflect.defineMetadata(
+      SERVICE_SERVER_RPC_TOKEN + propertyKey,
+      metadata,
+      target
+    );
   };
 };
 
 const RPCMessageType =
   (Type: { new (...args: any[]): {} }, argType: 'return' | 'input') =>
   (target: any, propertyKey: string) => {
-    let metadata = Reflect.getMetadata(SERVICE_RPC_TOKEN + propertyKey, target);
+    let metadata = Reflect.getMetadata(
+      SERVICE_SERVER_RPC_TOKEN + propertyKey,
+      target
+    );
 
     if (!metadata) {
       throw new Error('Missing the RPC decorator?');
@@ -41,7 +48,11 @@ const RPCMessageType =
       });
     }
 
-    Reflect.defineMetadata(SERVICE_RPC_TOKEN + propertyKey, metadata, target);
+    Reflect.defineMetadata(
+      SERVICE_SERVER_RPC_TOKEN + propertyKey,
+      metadata,
+      target
+    );
   };
 
 export const ArgumentType = (argumentType: { new (...args: any[]): {} }) => {

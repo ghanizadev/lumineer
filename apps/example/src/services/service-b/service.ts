@@ -3,7 +3,7 @@ import {
   BodyParam,
   Metadata,
   ReturnType,
-  RPC,
+  RPCServerFunction,
   Service,
   StreamParam,
 } from '@cymbaline/core';
@@ -19,7 +19,7 @@ import { Duplex } from 'stream';
 export class ServiceWithAReallyLongNameIndeed {
   constructor(private count = 0) {}
 
-  @RPC()
+  @RPCServerFunction()
   @ReturnType(ReturnMessageType)
   @ArgumentType(InputMessageType)
   private async sayHi(
@@ -29,7 +29,7 @@ export class ServiceWithAReallyLongNameIndeed {
     return { message: 'Hello world! ' + body.name };
   }
 
-  @RPC()
+  @RPCServerFunction()
   @ReturnType(StreamReturnType)
   @ArgumentType(StreamInputType)
   private async sayWhateverYouWantToSayBecauseLifeIsTooShortToFollowTheseSocialConventions(

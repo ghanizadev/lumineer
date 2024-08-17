@@ -4,7 +4,7 @@ import {
   InjectLogger,
   Middleware,
   ReturnType,
-  RPC,
+  RPCServerFunction,
   Service,
   StreamParam,
 } from '@cymbaline/core';
@@ -26,7 +26,7 @@ export class ServiceModule {
 
   constructor(@InjectLogger() private readonly logger: Logger) {}
 
-  @RPC()
+  @RPCServerFunction()
   @ReturnType(ReturnMessageType)
   @ArgumentType(InputMessageType)
   private async sayHello(
@@ -42,7 +42,7 @@ export class ServiceModule {
     stream.end();
   }
 
-  @RPC(PingResponse)
+  @RPCServerFunction(PingResponse)
   @ReturnType(PingResponse)
   @ArgumentType(PingRequest)
   private async pingPong(

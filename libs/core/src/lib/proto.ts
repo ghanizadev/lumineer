@@ -1,6 +1,6 @@
 import * as path from 'node:path';
 import * as fs from 'node:fs';
-import { PROPERTY_TYPE_TOKEN, SERVICE_RPC_TOKEN } from './constants';
+import { PROPERTY_TYPE_TOKEN, SERVICE_SERVER_RPC_TOKEN } from './constants';
 
 export class ProtoGenerator {
   constructor(
@@ -19,7 +19,7 @@ export class ProtoGenerator {
       const handlerMetadata = [];
 
       for (const key of Reflect.getMetadataKeys(instance)) {
-        if (!key.startsWith(SERVICE_RPC_TOKEN)) continue;
+        if (!key.startsWith(SERVICE_SERVER_RPC_TOKEN)) continue;
 
         const metadata = Reflect.getMetadata(key, instance);
 

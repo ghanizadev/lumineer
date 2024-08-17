@@ -1,6 +1,6 @@
 export const SERVICE_TOKEN = 'service';
 
-export const SERVICE_RPC_TOKEN = 'service:rpc:';
+export const SERVICE_SERVER_RPC_TOKEN = 'service:server:rpc:';
 
 export const SERVICE_RPC_ARGS_TOKEN = 'service:rpc:args:';
 
