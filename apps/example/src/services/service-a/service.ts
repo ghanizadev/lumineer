@@ -41,7 +41,15 @@ export class ServiceModule {
     for (let i = 0; i < 3; i++) {
       await new Promise((res) => setTimeout(res, 1000));
       this.logger.info('Sending hello');
-      stream.write({ status: i, message: 'Hello world! ' + body.name });
+      const response = await this.grpcServiceClient.invoke(
+        'app.UserService',
+        'GetUser',
+        { id: i.toString() }
+      );
+      stream.write({
+        status: i,
+        message: `Hello ${body.name}, your lucky number is ${response.id}`,
+      });
     }
 
     stream.end();
@@ -54,14 +62,6 @@ export class ServiceModule {
     @BodyParam() body: PingRequest,
     @StreamParam() stream: Duplex
   ) {
-    const response = await this.grpcServiceClient.invoke(
-      'app.UserService',
-      'GetUser',
-      { id: '1' }
-    );
-
-    console.log({ response });
-
     this.data.push(body);
     this.logger.info('Received: ' + this.data.length);
 

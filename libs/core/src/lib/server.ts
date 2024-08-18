@@ -10,7 +10,6 @@ import {
   GRPCFunctionMiddleware,
   GrpcPlugin,
   HookContext,
-  HookHandler,
   HookStage,
   MiddlewareContext,
   MiddlewareHandler,
@@ -50,13 +49,6 @@ export class GRPCServer {
   private readonly plugins: GrpcPlugin[] = [];
   private readonly dependencyContainer: DependencyContainer;
 
-  private readonly hooks: Record<HookStage, HookHandler[]> = {
-    onInit: [],
-    preCall: [],
-    postCall: [],
-    preBind: [],
-  };
-
   private readonly logger: BaseLogger;
 
   private port: number;
@@ -74,6 +66,7 @@ export class GRPCServer {
     this.updateOptions(options);
     this.logger = new BaseLogger('Server');
     this.dependencyContainer = container.createChildContainer();
+    this.server = new gRPC.Server();
 
     this.protoGenerator = new ProtoGenerator(
       this.options.config?.proto?.path!,
@@ -81,14 +74,18 @@ export class GRPCServer {
     );
   }
 
-  private config() {
-    this.configurePlugins();
-    this.parseServices(this.options.services);
+  private async config() {
+    await this.runHooks('onInit', {
+      server: this.server,
+      packageDefinition: this.packageDefinition,
+      dependencyContainer: this.dependencyContainer,
+    });
+
+    await this.parseServices(this.options.services);
 
     const protoFile = this.protoGenerator.makeProtoFile(this.services);
     this.protoGenerator.writeProtoFile(protoFile);
 
-    this.server = new gRPC.Server();
     this.packageDefinition = protoLoader.loadSync(
       this.protoGenerator.protoFilePath,
       {}
@@ -98,10 +95,8 @@ export class GRPCServer {
   }
 
   public async run(port: string | number) {
-    this.config();
-    this.configureModules();
-
-    this.runHooks('onInit');
+    await this.config();
+    await this.configureModules();
 
     for (const middleware of this.globalMiddlewares) {
       const mw = this.processMiddleware(middleware);
@@ -131,34 +126,29 @@ export class GRPCServer {
   public registerPlugin(plugin: { new (): GrpcPlugin }) {
     const instance = this.dependencyContainer.resolve<GrpcPlugin>(plugin);
     this.plugins.push(instance);
+    this.logger.info(`Plugin "${instance.constructor.name}" added.`);
   }
 
-  private registerHook(stage: HookStage, fn: () => void) {
-    this.hooks[stage].push(fn);
+  private async runHooks(stage: HookStage, context: HookContext) {
+    await Promise.allSettled(
+      this.plugins.map((pluginInstance) =>
+        pluginInstance[stage].call(pluginInstance, context)
+      )
+    ).catch((e) => console.error(e));
   }
 
-  private runHooks(stage: HookStage, context: HookContext = {}) {
-    Promise.allSettled(this.hooks[stage].map((hook) => hook(context))).catch(
-      (e) => console.error(e)
-    );
-  }
-
-  private configurePlugins() {
-    for (const plugin of this.plugins) {
-      plugin.configure({
-        registerHook: this.registerHook.bind(this),
-        dependencyContainer: this.dependencyContainer,
-        server: this.server,
-        packageDefinition: this.packageDefinition,
-      });
-    }
-
-    this.logger.info(`${this.plugins.length} plugins configured`);
-  }
-
-  private parseServices(services: ServiceType[]) {
+  private async parseServices(services: ServiceType[]) {
     for (const service of services) {
       const start = performance.now();
+
+      await this.runHooks('preConfig', {
+        server: this.server,
+        packageDefinition: this.packageDefinition,
+        dependencyContainer: this.dependencyContainer,
+        request: {
+          targetClass: service,
+        },
+      });
 
       const metadata = Reflect.getMetadata(SERVICE_TOKEN, service);
 
@@ -186,7 +176,7 @@ export class GRPCServer {
     }
   }
 
-  private configureModules() {
+  private async configureModules() {
     for (const [serviceName, data] of Object.entries(this.services)) {
       const serviceDef = (
         this.package[serviceName] as gRPC.ServiceClientConstructor
@@ -200,10 +190,15 @@ export class GRPCServer {
 
         const metadata = Reflect.getMetadata(key, data.instance);
 
-        this.runHooks('preBind', {
-          targetHandlerName: metadata.propertyKey,
-          targetObject: data.instance,
-          targetClass: data.serviceClass,
+        await this.runHooks('preBind', {
+          server: this.server,
+          packageDefinition: this.packageDefinition,
+          dependencyContainer: this.dependencyContainer,
+          request: {
+            targetHandlerName: metadata.propertyKey,
+            targetObject: data.instance,
+            targetClass: data.serviceClass,
+          },
         });
 
         const instanceMiddlewares =
@@ -220,11 +215,33 @@ export class GRPCServer {
           call: any,
           callback: any
         ) => {
+          await this.runHooks('preCall', {
+            server: this.server,
+            packageDefinition: this.packageDefinition,
+            dependencyContainer: this.dependencyContainer,
+            request: {
+              targetHandlerName: metadata.propertyKey,
+              targetObject: data.instance,
+              targetClass: data.serviceClass,
+            },
+          });
+
           for (const mw of middlewares) {
-            await mw.call(mw, this.makeMiddlewareContext(call));
+            await mw.call(mw, this.makeMiddlewareContext(call, callback));
           }
 
           await handlerInstance.invoke(call, callback);
+
+          await this.runHooks('postCall', {
+            server: this.server,
+            packageDefinition: this.packageDefinition,
+            dependencyContainer: this.dependencyContainer,
+            request: {
+              targetHandlerName: metadata.propertyKey,
+              targetObject: data.instance,
+              targetClass: data.serviceClass,
+            },
+          });
         };
 
         serviceImplementations[metadata.propertyKey] = handler.bind(this);
@@ -234,15 +251,15 @@ export class GRPCServer {
     }
   }
 
-  private makeMiddlewareContext(call?: any): MiddlewareContext {
+  private makeMiddlewareContext(call?: any, callback?: any): MiddlewareContext {
     return {
-      server: this.server,
-      packageDefinition: this.packageDefinition,
-      logger: this.logger.withContext('Middleware', 'bgYellow'),
+      logger: new Logger('Middleware', 'bgYellow'),
+      call,
       request: {
         body: call?.request,
         metadata: call?.metadata,
       },
+      callback,
     };
   }
 

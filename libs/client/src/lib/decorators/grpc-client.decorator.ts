@@ -1,5 +1,6 @@
 import { inject } from 'tsyringe';
 import * as _ from 'lodash';
+import { nanoid } from 'nanoid';
 
 export type GrpcClientOptions = {
   useReflection?: boolean;
@@ -14,7 +15,7 @@ export const GrpcClient = (url: string, options?: GrpcClientOptions) => {
     const opts = _.defaultsDeep(defaultOptions, options);
 
     Reflect.defineMetadata(
-      'grpc-client:' + parameterIndex,
+      'grpc-client:' + nanoid(),
       { parameterIndex, url, propertyKey, ...opts },
       target
     );

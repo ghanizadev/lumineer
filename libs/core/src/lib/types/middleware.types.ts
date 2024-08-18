@@ -1,15 +1,13 @@
-import type { Server } from '@grpc/grpc-js';
-import type { PackageDefinition } from '@grpc/proto-loader';
 import { Logger } from '@cymbaline/logger';
 
 export type MiddlewareContext = {
-  server: Server;
-  packageDefinition: PackageDefinition;
   logger: Logger;
-  request: {
+  request?: {
     body?: Record<string, any>;
     metadata?: Record<string, any>;
   };
+  call?: any;
+  callback?: any;
 };
 
 export type MiddlewareHandler = (

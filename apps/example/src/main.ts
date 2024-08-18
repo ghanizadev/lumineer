@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 
 import { GRPCServer } from '@cymbaline/core';
-import { ServerReflection } from '@cymbaline/server-reflection';
+import { ServerReflectionPlugin } from '@cymbaline/server-reflection';
 import { ServiceModule } from './services/service-a/service';
 import { ServiceWithAReallyLongNameIndeed } from './services/service-b/service';
 import { GrpcClientPlugin } from '@cymbaline/client';
@@ -16,7 +16,7 @@ const main = async () => {
     },
   });
 
-  server.use(ServerReflection);
+  server.registerPlugin(ServerReflectionPlugin);
   server.registerPlugin(GrpcClientPlugin);
   await server.run('0.0.0.0:' + PORT);
 };

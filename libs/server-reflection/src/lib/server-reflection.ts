@@ -1,8 +1,8 @@
 import { ReflectionService } from '@grpc/reflection';
-import { GRPCClassMiddleware, MiddlewareContext } from '@cymbaline/core';
+import { GrpcPlugin, HookContext } from '@cymbaline/core';
 
-export class ServerReflection extends GRPCClassMiddleware {
-  public handle(context: MiddlewareContext): Promise<void> | void {
+export class ServerReflectionPlugin extends GrpcPlugin {
+  async preBind(context: HookContext): Promise<void> {
     const reflection = new ReflectionService(context.packageDefinition);
     reflection.addToServer(context.server);
   }
