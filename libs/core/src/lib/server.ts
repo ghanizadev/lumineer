@@ -148,6 +148,8 @@ export class GRPCServer {
       plugin.configure({
         registerHook: this.registerHook.bind(this),
         dependencyContainer: this.dependencyContainer,
+        server: this.server,
+        packageDefinition: this.packageDefinition,
       });
     }
 
