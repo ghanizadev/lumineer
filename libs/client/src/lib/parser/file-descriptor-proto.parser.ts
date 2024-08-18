@@ -80,6 +80,10 @@ export class FileDescriptorProtoParser {
     return messageText;
   }
 
+  get filename() {
+    return this.fileDescriptor.name;
+  }
+
   private generateFieldLabel(label: string | number) {
     switch (label) {
       case 'LABEL_OPTIONAL':

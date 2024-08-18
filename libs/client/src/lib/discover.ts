@@ -32,7 +32,7 @@ export class Discover {
     });
 
     this.pkg = gRPC.loadPackageDefinition(pkgDefinition).grpc;
-    this.protoPath = path.resolve(process.cwd(), '.grpc', 'discovery');
+    this.protoPath = path.resolve(process.cwd(), '.cymbaline', 'discovery');
     this.protoName = 'discovery-' + nanoid();
 
     this.validateProtoPath();
@@ -89,9 +89,15 @@ export class Discover {
   }
 
   private processFileDescriptorProto(chunk: Record<string, any>) {
+    const filesProcessed: string[] = [];
+
     for (const file of chunk.file_descriptor_response.file_descriptor_proto) {
       const parser = new FileDescriptorProtoParser(file);
-      parser.saveToFile(this.protoFilePath);
+
+      if (!filesProcessed.includes(parser.filename)) {
+        parser.saveToFile(this.protoFilePath);
+        filesProcessed.push(parser.filename);
+      }
     }
 
     this.currentStream.end();

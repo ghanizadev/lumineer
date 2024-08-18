@@ -37,8 +37,8 @@ export type GRPCServerOptions = {
 const DEFAULT_OPTIONS: Partial<GRPCServerOptions> = {
   config: {
     proto: {
-      path: path.resolve(process.cwd(), '.grpc'),
-      file: '.proto',
+      path: path.resolve(process.cwd(), '.cymbaline'),
+      file: 'app.proto',
     },
   },
 };
@@ -117,6 +117,11 @@ export class GRPCServer {
   public close() {
     this.server.unbind('127.0.0.1:' + this.port);
     this.server.forceShutdown();
+    this.runHooks('onShutdown', {
+      server: this.server,
+      packageDefinition: this.packageDefinition,
+      dependencyContainer: this.dependencyContainer,
+    });
   }
 
   public use(middleware: GRPCFunctionMiddleware | GRPCClassMiddlewareType) {
