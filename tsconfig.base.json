@@ -15,8 +15,12 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@cymbaline/client": ["libs/client/src/index.ts"],
       "@cymbaline/core": ["libs/core/src/index.ts"],
       "@cymbaline/logger": ["libs/logger/src/index.ts"],
+      "@cymbaline/server-introspection": [
+        "libs/server-introspection/src/index.ts"
+      ],
       "@cymbaline/server-reflection": ["libs/server-reflection/src/index.ts"]
     }
   },

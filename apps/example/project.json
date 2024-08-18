@@ -4,7 +4,7 @@
   "sourceRoot": "apps/example/src",
   "projectType": "application",
   "tags": [],
-  "implicitDependencies": ["logger", "server-reflection"],
+  "implicitDependencies": ["logger", "server-reflection", "client"],
   "targets": {
     "build": {
       "executor": "@nx/esbuild:esbuild",

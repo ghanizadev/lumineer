@@ -9,13 +9,14 @@ import {
   StreamParam,
 } from '@cymbaline/core';
 import { Logger } from '@cymbaline/logger';
-import { Writable, Readable, Duplex } from 'stream';
+import { Writable, Duplex } from 'stream';
 import {
   InputMessageType,
   PingRequest,
   PingResponse,
   ReturnMessageType,
 } from './dto';
+import { GrpcClient, GrpcServiceClient } from '@cymbaline/client';
 
 @Service()
 @Middleware(({ logger }) => {
@@ -24,7 +25,11 @@ import {
 export class ServiceModule {
   private data: PingRequest[] = [];
 
-  constructor(@InjectLogger() private readonly logger: Logger) {}
+  constructor(
+    @InjectLogger() private readonly logger: Logger,
+    @GrpcClient('127.0.0.1:50052')
+    private readonly grpcServiceClient: GrpcServiceClient
+  ) {}
 
   @RPCServerFunction()
   @ReturnType(ReturnMessageType)
@@ -42,13 +47,21 @@ export class ServiceModule {
     stream.end();
   }
 
-  @RPCServerFunction(PingResponse)
+  @RPCServerFunction()
   @ReturnType(PingResponse)
   @ArgumentType(PingRequest)
   private async pingPong(
     @BodyParam() body: PingRequest,
     @StreamParam() stream: Duplex
   ) {
+    const response = await this.grpcServiceClient.invoke(
+      'app.UserService',
+      'GetUser',
+      { id: '1' }
+    );
+
+    console.log({ response });
+
     this.data.push(body);
     this.logger.info('Received: ' + this.data.length);
 

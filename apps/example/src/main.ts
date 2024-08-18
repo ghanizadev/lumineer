@@ -4,6 +4,9 @@ import { GRPCServer } from '@cymbaline/core';
 import { ServerReflection } from '@cymbaline/server-reflection';
 import { ServiceModule } from './services/service-a/service';
 import { ServiceWithAReallyLongNameIndeed } from './services/service-b/service';
+import { GrpcClientPlugin } from '@cymbaline/client';
+
+const PORT = process.env.PORT ?? 50051;
 
 const main = async () => {
   const server = new GRPCServer({
@@ -14,7 +17,8 @@ const main = async () => {
   });
 
   server.use(ServerReflection);
-  await server.run(50051);
+  server.registerPlugin(GrpcClientPlugin);
+  await server.run('0.0.0.0:' + PORT);
 };
 
 main();

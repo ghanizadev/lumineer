@@ -1,0 +1,34 @@
+{
+  "name": "client",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/src",
+  "projectType": "library",
+  "release": {
+    "version": {
+      "generatorOptions": {
+        "packageRoot": "dist/{projectRoot}",
+        "currentVersionResolver": "git-tag"
+      }
+    }
+  },
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/client",
+        "tsConfig": "libs/client/tsconfig.lib.json",
+        "packageJson": "libs/client/package.json",
+        "main": "libs/client/src/index.ts",
+        "assets": ["libs/client/*.md", "libs/client/src/assets/*.proto"]
+      }
+    },
+    "nx-release-publish": {
+      "options": {
+        "packageRoot": "dist/{projectRoot}"
+      }
+    }
+  },
+  "implicitDependencies": ["core", "logger"]
+}
