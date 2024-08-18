@@ -2,22 +2,25 @@ import * as gRPC from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import * as path from 'node:path';
 import * as _ from 'lodash';
-import { container } from 'tsyringe';
+import { container, DependencyContainer } from 'tsyringe';
 import { Logger, Logger as BaseLogger } from '@cymbaline/logger';
 import { ProtoGenerator } from './proto';
 import {
-  GRPCClassMiddleware,
   GRPCClassMiddlewareType,
   GRPCFunctionMiddleware,
+  GrpcPlugin,
+  HookContext,
+  HookHandler,
+  HookStage,
   MiddlewareContext,
   MiddlewareHandler,
 } from './types';
 import {
   SERVICE_MIDDLEWARE_TOKEN,
-  SERVICE_RPC_ARGS_TOKEN,
   SERVICE_SERVER_RPC_TOKEN,
   SERVICE_TOKEN,
 } from './constants';
+import { Handler } from './handler';
 
 type ServiceType = { new (...args: any[]): {} };
 
@@ -41,22 +44,20 @@ const DEFAULT_OPTIONS: Partial<GRPCServerOptions> = {
   },
 };
 
-type HandlerData = {
-  data: any;
-  metadata: any;
-  call: any;
-  callback: (err: any, response?: any) => Promise<void> | void;
-};
-
 export class GRPCServer {
   private readonly services: Record<string, any> = {};
   private readonly protoGenerator: ProtoGenerator;
+  private readonly plugins: GrpcPlugin[] = [];
+  private readonly dependencyContainer: DependencyContainer;
+
+  private readonly hooks: Record<HookStage, HookHandler[]> = {
+    onInit: [],
+    preCall: [],
+    postCall: [],
+    preBind: [],
+  };
 
   private readonly logger: BaseLogger;
-  private readonly server: gRPC.Server;
-  private readonly packageDefinition: protoLoader.PackageDefinition;
-  private readonly grpcObject: gRPC.GrpcObject;
-  private readonly package: gRPC.GrpcObject;
 
   private port: number;
   private globalMiddlewares: (
@@ -64,16 +65,25 @@ export class GRPCServer {
     | GRPCClassMiddlewareType
   )[] = [];
   private options: GRPCServerOptions;
+  private server: gRPC.Server;
+  private packageDefinition: protoLoader.PackageDefinition;
+  private grpcObject: gRPC.GrpcObject;
+  private package: gRPC.GrpcObject;
 
   constructor(options: GRPCServerOptions) {
     this.updateOptions(options);
     this.logger = new BaseLogger('Server');
+    this.dependencyContainer = container.createChildContainer();
 
     this.protoGenerator = new ProtoGenerator(
       this.options.config?.proto?.path!,
       this.options.config?.proto?.file!
     );
-    this.parseServices(options.services);
+  }
+
+  private config() {
+    this.configurePlugins();
+    this.parseServices(this.options.services);
 
     const protoFile = this.protoGenerator.makeProtoFile(this.services);
     this.protoGenerator.writeProtoFile(protoFile);
@@ -84,13 +94,15 @@ export class GRPCServer {
       {}
     );
     this.grpcObject = gRPC.loadPackageDefinition(this.packageDefinition);
-
     this.package = this.grpcObject.app as gRPC.GrpcObject;
-
-    this.configureModules();
   }
 
   public async run(port: string | number) {
+    this.config();
+    this.configureModules();
+
+    this.runHooks('onInit');
+
     for (const middleware of this.globalMiddlewares) {
       const mw = this.processMiddleware(middleware);
       await mw.call(mw, this.makeMiddlewareContext());
@@ -116,35 +128,30 @@ export class GRPCServer {
     this.globalMiddlewares.push(middleware);
   }
 
-  private makeArguments(call: any, instance: any, handlerName: string) {
-    const args = Reflect.getMetadata(
-      SERVICE_RPC_ARGS_TOKEN,
-      instance,
-      handlerName
+  public registerPlugin(plugin: { new (): GrpcPlugin }) {
+    const instance = this.dependencyContainer.resolve<GrpcPlugin>(plugin);
+    this.plugins.push(instance);
+  }
+
+  private registerHook(stage: HookStage, fn: () => void) {
+    this.hooks[stage].push(fn);
+  }
+
+  private runHooks(stage: HookStage, context: HookContext = {}) {
+    Promise.allSettled(this.hooks[stage].map((hook) => hook(context))).catch(
+      (e) => console.error(e)
     );
-    const result: any[] = new Array(instance[handlerName].length);
+  }
 
-    for (let i = 0; i < result.length; i++) {
-      if (args[i]) {
-        const { type } = args[i];
-
-        switch (type) {
-          case 'body':
-            result[i] = call.request;
-            break;
-          case 'metadata':
-            result[i] = call.metadata;
-            break;
-          case 'stream':
-            result[i] = call;
-            break;
-          default:
-            break;
-        }
-      }
+  private configurePlugins() {
+    for (const plugin of this.plugins) {
+      plugin.configure({
+        registerHook: this.registerHook.bind(this),
+        dependencyContainer: this.dependencyContainer,
+      });
     }
 
-    return result;
+    this.logger.info(`${this.plugins.length} plugins configured`);
   }
 
   private parseServices(services: ServiceType[]) {
@@ -155,9 +162,10 @@ export class GRPCServer {
 
       if (!metadata || !metadata.name) throw new Error('Forgot decorator?');
 
-      const c = container.createChildContainer();
-      c.register(Logger, { useValue: new Logger(metadata.name, 'bgMagenta') });
-      const instance: any = c.resolve(service);
+      this.dependencyContainer.register(Logger, {
+        useValue: new Logger(metadata.name, 'bgMagenta'),
+      });
+      const instance: any = this.dependencyContainer.resolve(service);
 
       const middlewares =
         Reflect.getMetadata(SERVICE_MIDDLEWARE_TOKEN, service) ?? [];
@@ -165,6 +173,7 @@ export class GRPCServer {
       this.services[metadata.name] = {
         instance,
         middlewares,
+        serviceClass: service,
         ...metadata,
       };
 
@@ -188,6 +197,13 @@ export class GRPCServer {
         if (!key.startsWith(SERVICE_SERVER_RPC_TOKEN)) continue;
 
         const metadata = Reflect.getMetadata(key, data.instance);
+
+        this.runHooks('preBind', {
+          targetHandlerName: metadata.propertyKey,
+          targetObject: data.instance,
+          targetClass: data.serviceClass,
+        });
+
         const instanceMiddlewares =
           Reflect.getMetadata(SERVICE_MIDDLEWARE_TOKEN, data.instance) ?? {};
 
@@ -196,19 +212,17 @@ export class GRPCServer {
           ...(instanceMiddlewares[metadata.propertyKey] ?? []),
         ].map<MiddlewareHandler>(this.processMiddleware.bind(this));
 
+        const handlerInstance = new Handler({ data, metadata });
+
         const handler: gRPC.UntypedHandleCall = async (
           call: any,
           callback: any
         ) => {
-          await this.makeHandler(
-            {
-              data,
-              metadata,
-              call,
-              callback,
-            },
-            middlewares
-          );
+          for (const mw of middlewares) {
+            await mw.call(mw, this.makeMiddlewareContext(call));
+          }
+
+          await handlerInstance.invoke(call, callback);
         };
 
         serviceImplementations[metadata.propertyKey] = handler.bind(this);
@@ -237,194 +251,11 @@ export class GRPCServer {
   private processMiddleware(
     middleware: any
   ): (context: MiddlewareContext) => Promise<void> | void {
-    try {
-      const instance = container.resolve<GRPCClassMiddleware>(middleware);
+    if (middleware.prototype && middleware.constructor.name) {
+      // const instance = container.resolve<GRPCClassMiddleware>(middleware);
+      const instance = new middleware();
       return instance.handle.bind(instance);
-    } catch {}
-
+    }
     return middleware;
-  }
-
-  private async makeHandler(
-    context: HandlerData,
-    middlewares: MiddlewareHandler[]
-  ) {
-    const { data, metadata, call, callback } = context;
-
-    const start = performance.now();
-
-    try {
-      for (const mw of middlewares) {
-        await mw.call(mw, this.makeMiddlewareContext(call));
-      }
-
-      const args = this.makeArguments(
-        call,
-        data.instance,
-        metadata.propertyKey
-      );
-
-      const fn = data.instance[metadata.propertyKey].bind(data.instance);
-
-      switch (this.getRequestType(metadata)) {
-        case 'bidirectionalStream':
-          await this.handleBidirectionalStreamingCall(fn, args, context);
-          break;
-        case 'clientStream':
-          await this.handleClientStreamingCall(fn, args, context);
-          break;
-        case 'serverStream':
-          await this.handleServerStreamingCall(fn, args, context);
-          break;
-        case 'unary':
-          await this.handleUnaryCall(fn, args, context);
-          break;
-      }
-
-      const end = performance.now();
-
-      this.logger.info(
-        `RPC to ${data.name}.${metadata.propertyKey} done in ${(
-          end - start
-        ).toFixed(3)}ms`
-      );
-    } catch (e) {
-      if (callback) {
-        callback(e);
-      } else {
-        call.emit('error', { status: gRPC.status.INTERNAL });
-      }
-      this.logger.error(
-        `RPC to ${data.name}.${metadata.propertyKey} failed: ${e}`
-      );
-    }
-  }
-
-  private getRequestType(serviceMetadata: any) {
-    if (serviceMetadata.returnType.metadata.stream) {
-      if (serviceMetadata.inputType.metadata.stream)
-        return 'bidirectionalStream';
-
-      return 'serverStream';
-    }
-
-    if (serviceMetadata.inputType.metadata.stream) return 'clientStream';
-
-    return 'unary';
-  }
-
-  private async handleBidirectionalStreamingCall(
-    fn: any,
-    args: any[],
-    context: HandlerData
-  ) {
-    const { call, data, metadata } = context;
-
-    try {
-      call.on('data', async (chunk: any) => {
-        const argMetadata = Reflect.getMetadata(
-          SERVICE_RPC_ARGS_TOKEN,
-          data.instance,
-          metadata.propertyKey
-        );
-
-        let bodyIndex = -1;
-
-        for (const key in argMetadata) {
-          if (argMetadata[key].type === 'body') {
-            bodyIndex = +key;
-            break;
-          }
-        }
-
-        if (bodyIndex !== -1) {
-          let updatedArgs = [...args];
-          updatedArgs[bodyIndex] = chunk;
-          fn(...updatedArgs);
-        }
-      });
-    } catch (e) {
-      call.emit('error', { code: gRPC.status.INTERNAL, message: e.message });
-      this.logger.error(
-        `RPC to ${data.name}.${metadata.propertyKey} failed: ${e}`
-      );
-    }
-  }
-
-  private async handleServerStreamingCall(
-    fn: any,
-    args: any[],
-    context: HandlerData
-  ) {
-    const { call, metadata, data } = context;
-
-    try {
-      if (fn.constructor.name.includes('GeneratorFunction')) {
-        for await (const response of fn(...args)) {
-          call.write(response);
-        }
-        call.end();
-      } else {
-        await Promise.resolve(fn(...args));
-      }
-    } catch (e) {
-      this.logger.error(
-        `RPC to ${data.name}.${metadata.propertyKey} failed: ${e}`
-      );
-      call.emit('error', { code: gRPC.status.INTERNAL });
-    }
-  }
-
-  private async handleClientStreamingCall(
-    fn: any,
-    args: any[],
-    context: HandlerData
-  ) {
-    const { callback, call, data, metadata } = context;
-    try {
-      call.on('data', async (chunk: any) => {
-        const argMetadata = Reflect.getMetadata(
-          SERVICE_RPC_ARGS_TOKEN,
-          data.instance,
-          metadata.propertyKey
-        );
-
-        let bodyIndex = -1;
-
-        for (const key in argMetadata) {
-          if (argMetadata[key].type === 'body') {
-            bodyIndex = +key;
-            break;
-          }
-        }
-
-        if (bodyIndex !== -1) {
-          let updatedArgs = [...args];
-          updatedArgs[bodyIndex] = chunk;
-          const response = await Promise.resolve(fn(...updatedArgs));
-          if (response) {
-            callback(null, response);
-          }
-        }
-      });
-    } catch (e) {
-      callback(e);
-      this.logger.error(
-        `RPC to ${data.name}.${metadata.propertyKey} failed: ${e}`
-      );
-    }
-  }
-
-  private async handleUnaryCall(fn: any, args: any[], context: HandlerData) {
-    const { callback, metadata, data } = context;
-    try {
-      const response = await Promise.resolve(fn(...args));
-      callback(null, response);
-    } catch (e) {
-      callback(e);
-      this.logger.error(
-        `RPC to ${data.name}.${metadata.propertyKey} failed: ${e}`
-      );
-    }
   }
 }
