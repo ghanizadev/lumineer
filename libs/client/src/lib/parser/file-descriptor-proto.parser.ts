@@ -1,24 +1,21 @@
 import {
   FileDescriptorProto,
-  IFileDescriptorProto,
   IDescriptorProto,
   IEnumDescriptorProto,
   IServiceDescriptorProto,
+  IFileDescriptorProto,
+  IFieldDescriptorProto,
 } from 'protobufjs/ext/descriptor';
 import * as fs from 'node:fs';
+import { LabelMap, TypeMap } from '../constants';
 
 export class FileDescriptorProtoParser {
   private readonly fileDescriptor: IFileDescriptorProto;
 
   private protoText = '';
 
-  constructor(private readonly fileBuffer: Buffer) {
-    this.fileDescriptor = FileDescriptorProto.decode(
-      fileBuffer
-    ) as IFileDescriptorProto;
-
-    //hack
-    this.fileDescriptor = JSON.parse(JSON.stringify(this.fileDescriptor));
+  constructor(fileBuffer: Buffer) {
+    this.fileDescriptor = FileDescriptorProto.decode(fileBuffer).toJSON();
   }
 
   public saveToFile(path: string) {
@@ -28,6 +25,10 @@ export class FileDescriptorProtoParser {
       path + '.json',
       JSON.stringify(this.fileDescriptor, null, 2)
     );
+  }
+
+  get filename() {
+    return this.fileDescriptor.name;
   }
 
   public toText() {
@@ -65,42 +66,102 @@ export class FileDescriptorProtoParser {
     return this.protoText;
   }
 
-  private generateMessageText(messageType: IDescriptorProto) {
-    let messageText = `message ${messageType.name} {\n`;
+  private generateMessageText(messageType: IDescriptorProto, indentation = '') {
+    let messageText = `${indentation}message ${messageType.name} {\n`;
+
+    const fields: { [key: number]: IFieldDescriptorProto[] } = {};
 
     messageType.field.forEach((field) => {
-      messageText += `  ${this.generateFieldLabel(
-        field.label
-      )}${this.generateFieldType(field.type)} ${field.name} = ${
-        field.number
-      };\n`;
+      const index = field.oneofIndex ?? -1;
+      fields[index] = [...(fields[index] ?? []), field];
     });
 
-    messageText += '}\n\n';
+    const p = (field: IFieldDescriptorProto) => {
+      let labelType = '';
+
+      if (field.typeName) {
+        const nestedType = messageType.nestedType.find(
+          (type) => type.name === field.typeName
+        );
+        labelType = this.generateTypeField(
+          field,
+          nestedType,
+          indentation + '  '
+        );
+      } else {
+        const type = TypeMap[field.type];
+        const label = LabelMap[field.label];
+
+        labelType = `${indentation}${label ? label + ' ' : ''}${type} `;
+      }
+
+      messageText += `${indentation}  ${labelType} ${field.name} = ${field.number};\n`;
+    };
+
+    for (const key in fields) {
+      if (key === '-1') {
+        fields[key].forEach(p);
+      } else {
+        if (fields[key].length > 1) {
+          messageText += this.generateOneOfBlock(
+            fields[key],
+            messageType.oneofDecl[fields[key][0].oneofIndex].name,
+            indentation + '  '
+          );
+        } else {
+          p(fields[key][0]);
+        }
+      }
+    }
+
+    messageText += `${indentation}}\n\n`;
     return messageText;
   }
 
-  get filename() {
-    return this.fileDescriptor.name;
+  private generateOneOfBlock(
+    fields: IFieldDescriptorProto[],
+    typeName: string,
+    indentation = ''
+  ) {
+    let oneOf = `${indentation}oneof ${typeName} {\n`;
+
+    for (const field of fields) {
+      oneOf += `${indentation}  ${field.typeName ?? TypeMap[field.type]} ${
+        field.name
+      } = ${field.number};\n`;
+    }
+
+    oneOf += `${indentation}}\n`;
+
+    return oneOf;
   }
 
-  private generateFieldLabel(label: string | number) {
-    switch (label) {
-      case 'LABEL_OPTIONAL':
-        return label.replace('LABEL_', '').toLowerCase() + ' ';
-      default:
-        return '';
+  private generateTypeField(
+    field: IFieldDescriptorProto,
+    nestedType: IDescriptorProto,
+    indentation = ''
+  ) {
+    if (!nestedType) {
+      if (TypeMap[field.type] === 'enum') return field.typeName;
+      return '';
     }
-  }
 
-  private generateFieldType(type: string | number) {
-    switch (type) {
-      case 'TYPE_STRING':
-      case 'TYPE_INT32':
-        return type.replace('TYPE_', '').toLowerCase() + ' ';
-      default:
-        return '';
+    if (nestedType.options?.mapEntry) {
+      const keyType = TypeMap[nestedType.field[0].type];
+      const valueType = TypeMap[nestedType.field[1].type];
+
+      return `map<${keyType}, ${valueType}>`;
     }
+
+    if (TypeMap[field.type] === 'message') {
+      let innerMessage = this.generateMessageText(nestedType, indentation);
+      const label = LabelMap[field.label];
+      return `${innerMessage.substring(2)}  ${label ? label + ' ' : ''}${
+        field.typeName ?? TypeMap[field.type]
+      }`;
+    }
+
+    return '';
   }
 
   private generateEnumText(enumType: IEnumDescriptorProto) {
