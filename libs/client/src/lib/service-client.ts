@@ -43,7 +43,14 @@ export class GrpcServiceClient {
     const evaluate = new Function('pkg', `return pkg.${servicePath}`);
     let Service = evaluate(this.config.pkg);
 
+    if (!Service) throw new Error('Service does not exist');
+
     const service = new Service(this.config.url, credentials.createInsecure());
+
+    const functionInstance = service[functionName];
+
+    if (!functionInstance) throw new Error('Function does not exist');
+
     const { requestStream, responseStream } = service[functionName];
     const fn = service[functionName].bind(service);
 

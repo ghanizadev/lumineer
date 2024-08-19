@@ -3,7 +3,6 @@ import * as path from 'node:path';
 import * as fs from 'node:fs';
 import * as protoLoader from '@grpc/proto-loader';
 import * as gRPC from '@grpc/grpc-js';
-import { credentials } from '@grpc/grpc-js';
 import { nanoid } from 'nanoid';
 
 import { FileDescriptorProtoParser } from './parser/file-descriptor-proto.parser';
@@ -15,7 +14,10 @@ export class Discover {
 
   private currentStream: Duplex | undefined;
 
-  constructor(private readonly introspectUrl: string) {
+  constructor(
+    private readonly introspectUrl: string,
+    private readonly credentials: gRPC.ChannelCredentials
+  ) {
     const reflectionProtoPath = path.resolve(
       __dirname,
       '..',
@@ -42,7 +44,7 @@ export class Discover {
     await new Promise((res) => {
       const serviceClient = new this.pkg.reflection.v1.ServerReflection(
         this.introspectUrl,
-        credentials.createInsecure()
+        this.credentials
       );
 
       this.currentStream = serviceClient.ServerReflectionInfo();

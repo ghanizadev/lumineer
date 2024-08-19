@@ -31,6 +31,7 @@ export type GRPCServerOptions = {
       file?: string;
     };
     logger?: boolean;
+    credentials: gRPC.ServerCredentials;
   };
 };
 
@@ -40,6 +41,7 @@ const DEFAULT_OPTIONS: Partial<GRPCServerOptions> = {
       path: path.resolve(process.cwd(), '.cymbaline'),
       file: 'app.proto',
     },
+    credentials: gRPC.ServerCredentials.createInsecure(),
   },
 };
 
@@ -48,6 +50,7 @@ export class GRPCServer {
   private readonly protoGenerator: ProtoGenerator;
   private readonly plugins: GrpcPlugin[] = [];
   private readonly dependencyContainer: DependencyContainer;
+  private readonly server: gRPC.Server;
 
   private readonly logger: BaseLogger;
 
@@ -57,7 +60,6 @@ export class GRPCServer {
     | GRPCClassMiddlewareType
   )[] = [];
   private options: GRPCServerOptions;
-  private server: gRPC.Server;
   private packageDefinition: protoLoader.PackageDefinition;
   private grpcObject: gRPC.GrpcObject;
   private package: gRPC.GrpcObject;
@@ -105,7 +107,7 @@ export class GRPCServer {
 
     this.server.bindAsync(
       typeof port === 'string' ? port : '127.0.0.1:' + port,
-      gRPC.ServerCredentials.createInsecure(),
+      this.options.config.credentials,
       (err, port) => {
         this.port = port;
         if (this.options.config?.logger)
@@ -121,15 +123,22 @@ export class GRPCServer {
       server: this.server,
       packageDefinition: this.packageDefinition,
       dependencyContainer: this.dependencyContainer,
-    });
+    }).catch();
   }
 
   public use(middleware: GRPCFunctionMiddleware | GRPCClassMiddlewareType) {
     this.globalMiddlewares.push(middleware);
   }
 
-  public registerPlugin(plugin: { new (): GrpcPlugin }) {
-    const instance = this.dependencyContainer.resolve<GrpcPlugin>(plugin);
+  public registerPlugin(plugin: { new (): GrpcPlugin } | GrpcPlugin) {
+    let instance: GrpcPlugin;
+
+    if (plugin instanceof GrpcPlugin) {
+      instance = plugin;
+    } else {
+      instance = this.dependencyContainer.resolve<GrpcPlugin>(plugin);
+    }
+
     this.plugins.push(instance);
     this.logger.info(`Plugin "${instance.constructor.name}" added.`);
   }

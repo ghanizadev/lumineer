@@ -1,4 +1,15 @@
 {
   "name": "@cymbaline/client",
-  "version": "0.0.1"
+  "version": "0.0.1",
+  "dependencies": {
+    "@cymbaline/core": "^0.0.1",
+    "@cymbaline/logger": "^0.0.1",
+    "@grpc/grpc-js": "^1.11.1",
+    "@grpc/proto-loader": "^0.7.13",
+    "lodash": "^4.17.21",
+    "nanoid": "^3.3.7",
+    "reflect-metadata": "^0.2.2",
+    "tslib": "^2.3.0",
+    "tsyringe": "^4.8.0"
+  }
 }

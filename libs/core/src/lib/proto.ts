@@ -83,6 +83,8 @@ export class ProtoGenerator {
     return file.join('\n');
   }
 
+  private;
+
   public writeProtoFile(protoContents: string) {
     if (!fs.existsSync(this.protoPath)) {
       fs.mkdirSync(this.protoPath);

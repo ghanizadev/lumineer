@@ -77,7 +77,7 @@ export class FileDescriptorProtoParser {
     });
 
     const p = (field: IFieldDescriptorProto) => {
-      let labelType = '';
+      let labelType: string;
 
       if (field.typeName) {
         const nestedType = messageType.nestedType.find(

@@ -4,8 +4,29 @@ import * as gRPC from '@grpc/grpc-js';
 import { GrpcServiceClient } from './service-client';
 import { Discover } from './discover';
 
+type GrpcClientPluginOptions = {
+  clients?: {
+    [clientUrl: string]: {
+      /*
+       * Credentials to be used with this client. If undefined, insecure credentials will be used instead
+       */
+      credentials?: gRPC.ChannelCredentials;
+    };
+  };
+};
+
 export class GrpcClientPlugin extends GrpcPlugin {
   private readonly serviceMap: Record<string, any> = {};
+  private options: GrpcClientPluginOptions = {};
+
+  /*
+   * Create a new instance with options;
+   */
+  static configure(options: GrpcClientPluginOptions): GrpcPlugin {
+    const instance = new GrpcClientPlugin();
+    instance.options = options;
+    return instance;
+  }
 
   async preConfig(context: HookContext): Promise<void> {
     const { targetClass } = context.request;
@@ -15,7 +36,15 @@ export class GrpcClientPlugin extends GrpcPlugin {
     for (const key of keys) {
       if (key.startsWith('grpc-client:') && !this.serviceMap[key]) {
         const metadata = Reflect.getMetadata(key, targetClass);
-        const discovery = new Discover(metadata.url);
+        let credentials: gRPC.ChannelCredentials;
+
+        if (this.options.clients[metadata.url].credentials) {
+          credentials = this.options.clients[metadata.url].credentials;
+        } else {
+          credentials = gRPC.credentials.createInsecure();
+        }
+
+        const discovery = new Discover(metadata.url, credentials);
         await discovery.introspect();
 
         const pkgDefinition = protoLoader.loadSync(

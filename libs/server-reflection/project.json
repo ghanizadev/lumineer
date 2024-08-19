@@ -11,7 +11,7 @@
       }
     }
   },
-  "tags": [],
+  "tags": ["npm:public"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
@@ -27,8 +27,13 @@
     "nx-release-publish": {
       "options": {
         "packageRoot": "dist/{projectRoot}"
+      },
+      "configurations": {
+        "development": {
+          "registry": "http://localhost:4873/"
+        }
       }
     }
   },
-  "implicitDependencies": ["core"]
+  "implicitDependencies": ["core", "logger"]
 }
