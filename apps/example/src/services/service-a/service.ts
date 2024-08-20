@@ -4,7 +4,7 @@ import {
   InjectLogger,
   Middleware,
   ReturnType,
-  RPCServerFunction,
+  RPC,
   Service,
   StreamParam,
 } from '@cymbaline/core';
@@ -16,7 +16,6 @@ import {
   PingResponse,
   ReturnMessageType,
 } from './dto';
-import { GrpcClient, GrpcServiceClient } from '@cymbaline/client';
 
 @Service()
 @Middleware(({ logger }) => {
@@ -25,13 +24,9 @@ import { GrpcClient, GrpcServiceClient } from '@cymbaline/client';
 export class ServiceModule {
   private data: PingRequest[] = [];
 
-  constructor(
-    @InjectLogger() private readonly logger: Logger,
-    @GrpcClient('127.0.0.1:50052')
-    private readonly grpcServiceClient: GrpcServiceClient
-  ) {}
+  constructor(@InjectLogger() private readonly logger: Logger) {}
 
-  @RPCServerFunction()
+  @RPC()
   @ReturnType(ReturnMessageType)
   @ArgumentType(InputMessageType)
   private async sayHello(
@@ -41,21 +36,16 @@ export class ServiceModule {
     for (let i = 0; i < 3; i++) {
       await new Promise((res) => setTimeout(res, 1000));
       this.logger.info('Sending hello');
-      const response = await this.grpcServiceClient.invoke(
-        'app.UserService',
-        'GetUser',
-        { id: i.toString() }
-      );
       stream.write({
         status: i,
-        message: `Hello ${body.name}, your lucky number is ${response.id}`,
+        message: `Hello ${body.name}`,
       });
     }
 
     stream.end();
   }
 
-  @RPCServerFunction()
+  @RPC()
   @ReturnType(PingResponse)
   @ArgumentType(PingRequest)
   private async pingPong(

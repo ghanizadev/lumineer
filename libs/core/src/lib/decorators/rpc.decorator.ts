@@ -1,64 +1,68 @@
-import { SERVICE_SERVER_RPC_TOKEN } from '../constants';
+import { SERVICE_MESSAGE_TOKEN, SERVICE_RPC_TOKEN } from '../constants';
 import _ = require('lodash');
+import { RpcMetadata } from '../types/message.types';
 
-export type RPCOptions = {};
+export type RpcOptions = {};
 
 export type RPCArgumentType = {};
 
-export const RPCServerFunction = (options: RPCOptions = {}) => {
+export const RPC = (options: RpcOptions = {}) => {
   return (target: any, propertyKey: string) => {
-    let metadata: any =
-      Reflect.getMetadata(SERVICE_SERVER_RPC_TOKEN + propertyKey, target) ?? {};
-    metadata = { ...metadata, propertyKey, ...(options ?? {}) };
-    Reflect.defineMetadata(
-      SERVICE_SERVER_RPC_TOKEN + propertyKey,
-      metadata,
+    let metadata: RpcMetadata = Reflect.getMetadata(
+      SERVICE_RPC_TOKEN + propertyKey,
       target
     );
+
+    if (!metadata) metadata = { rpcName: propertyKey };
+
+    metadata = _.merge(metadata, { ...metadata, ...(options ?? {}) });
+
+    Reflect.defineMetadata(SERVICE_RPC_TOKEN + propertyKey, metadata, target);
   };
 };
 
-const RPCMessageType =
-  (Type: { new (...args: any[]): {} }, argType: 'return' | 'input') =>
+const rpcMessageType =
+  (type: { new (...args: any[]): {} }, argType: 'return' | 'argument') =>
   (target: any, propertyKey: string) => {
-    let metadata = Reflect.getMetadata(
-      SERVICE_SERVER_RPC_TOKEN + propertyKey,
-      target
-    );
+    let metadata: Record<string, RpcMetadata> =
+      Reflect.getMetadata(SERVICE_RPC_TOKEN, target) ?? {};
 
     if (!metadata) {
       throw new Error('Missing the RPC decorator?');
     }
 
-    metadata = { ...metadata, propertyKey };
+    let rpcMetadata = metadata[propertyKey];
 
-    const type: any = new Type();
-
-    const typeClassMetadata = Reflect.getMetadata('type', Type);
-    const instanceKeys = Reflect.getMetadataKeys(type);
-
-    for (const key of instanceKeys) {
-      const value = Reflect.getMetadata(key, type);
-
-      metadata = _.merge(metadata, {
-        [argType + 'Type']: {
-          metadata: typeClassMetadata,
-          [key]: value,
-        },
-      });
+    if (!rpcMetadata) {
+      rpcMetadata = {
+        rpcName: propertyKey,
+      };
     }
 
-    Reflect.defineMetadata(
-      SERVICE_SERVER_RPC_TOKEN + propertyKey,
-      metadata,
-      target
+    rpcMetadata[argType + 'TypeName'] = type.name;
+
+    metadata = _.merge(metadata, { [propertyKey]: rpcMetadata });
+    Reflect.defineMetadata(SERVICE_RPC_TOKEN, metadata, target);
+
+    const typeInstance = new type();
+    let propertiesMetadata = Reflect.getMetadata(
+      SERVICE_MESSAGE_TOKEN,
+      typeInstance
     );
+    let messageMetadata = Reflect.getMetadata(SERVICE_MESSAGE_TOKEN, type);
+
+    let message = _.merge(messageMetadata, propertiesMetadata);
+    let messages = Reflect.getMetadata('service:messages', target) ?? [];
+
+    messages.push(message);
+
+    Reflect.defineMetadata('service:messages', messages, target);
   };
 
 export const ArgumentType = (argumentType: { new (...args: any[]): {} }) => {
-  return RPCMessageType(argumentType, 'input');
+  return rpcMessageType(argumentType, 'argument');
 };
 
 export const ReturnType = (returnType: { new (...args: any[]): {} }) => {
-  return RPCMessageType(returnType, 'return');
+  return rpcMessageType(returnType, 'return');
 };

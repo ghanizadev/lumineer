@@ -1,36 +1,40 @@
-import {
-  MessageType,
-  NumberPropertyType,
-  StreamMessageType,
-  StringPropertyType,
-} from '@cymbaline/core';
+import { Message, Enum, PropertyType, MessageRef } from '@cymbaline/core';
 
-@MessageType()
+@Message()
 export class InputMessageType {
-  @StringPropertyType({ required: true })
+  @PropertyType('string', { required: true })
   name: string;
 }
 
-@StreamMessageType()
+@Enum()
+export class MyEnum {
+  readonly YES = 0;
+  readonly NO = 1;
+}
+
+@Message()
 export class ReturnMessageType {
-  @StringPropertyType()
+  @PropertyType('string')
   status: string;
 
-  @StringPropertyType()
+  @PropertyType('string')
   message: string;
 }
 
-@MessageType({ stream: true })
+@Message()
 export class PingRequest {
-  @StringPropertyType()
+  @PropertyType('string')
   message: string;
 }
 
-@MessageType()
+@Message()
 export class PingResponse {
-  @StringPropertyType()
+  @PropertyType('string')
   pong: string;
 
-  @NumberPropertyType({ type: 'int32' })
+  @PropertyType('string')
   randomNumber: number;
+
+  // @MessageRef(MyEnum)
+  enum: MyEnum;
 }

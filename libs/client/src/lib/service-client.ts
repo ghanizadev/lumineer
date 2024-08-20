@@ -1,4 +1,5 @@
 import { credentials } from '@grpc/grpc-js';
+import * as gRPC from '@grpc/grpc-js';
 
 export class GrpcServiceClient {
   constructor(private readonly config: any) {}
@@ -45,10 +46,16 @@ export class GrpcServiceClient {
 
     if (!Service) throw new Error('Service does not exist');
 
-    const service = new Service(this.config.url, credentials.createInsecure());
+    let credentials: gRPC.ChannelCredentials;
+    if (this.config.clients[this.config.url].credentials) {
+      //TODO: Log a warn about missing credentials
+      credentials = this.config.clients[this.config.url].credentials;
+    } else {
+      credentials = gRPC.credentials.createInsecure();
+    }
 
+    const service = new Service(this.config.url, credentials);
     const functionInstance = service[functionName];
-
     if (!functionInstance) throw new Error('Function does not exist');
 
     const { requestStream, responseStream } = service[functionName];

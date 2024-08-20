@@ -16,7 +16,7 @@ import {
 } from './types';
 import {
   SERVICE_MIDDLEWARE_TOKEN,
-  SERVICE_SERVER_RPC_TOKEN,
+  SERVICE_RPC_TOKEN,
   SERVICE_TOKEN,
 } from './constants';
 import { Handler } from './handler';
@@ -200,7 +200,7 @@ export class GRPCServer {
       const serviceImplementations: gRPC.UntypedServiceImplementation = {};
 
       for (const key of Reflect.getMetadataKeys(data.instance)) {
-        if (!key.startsWith(SERVICE_SERVER_RPC_TOKEN)) continue;
+        if (!key.startsWith(SERVICE_RPC_TOKEN)) continue;
 
         const metadata = Reflect.getMetadata(key, data.instance);
 

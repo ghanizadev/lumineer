@@ -39,6 +39,7 @@ export class GrpcClientPlugin extends GrpcPlugin {
         let credentials: gRPC.ChannelCredentials;
 
         if (this.options.clients[metadata.url].credentials) {
+          //TODO: Log a warn about missing credentials
           credentials = this.options.clients[metadata.url].credentials;
         } else {
           credentials = gRPC.credentials.createInsecure();
@@ -65,6 +66,7 @@ export class GrpcClientPlugin extends GrpcPlugin {
           useValue: new GrpcServiceClient({
             pkg,
             ...metadata,
+            clients: this.options.clients,
           }),
         });
       }
