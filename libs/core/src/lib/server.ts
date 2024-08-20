@@ -20,6 +20,7 @@ import {
   SERVICE_TOKEN,
 } from './constants';
 import { Handler } from './handler';
+import { ExceptionHandler } from './exception-handler';
 
 type ServiceType = { new (...args: any[]): {} };
 
@@ -90,7 +91,13 @@ export class GRPCServer {
 
     this.packageDefinition = protoLoader.loadSync(
       this.protoGenerator.protoFilePath,
-      {}
+      {
+        keepCase: true,
+        longs: String,
+        enums: String,
+        defaults: true,
+        oneofs: true,
+      }
     );
     this.grpcObject = gRPC.loadPackageDefinition(this.packageDefinition);
     this.package = this.grpcObject.app as gRPC.GrpcObject;
@@ -229,33 +236,37 @@ export class GRPCServer {
           call: any,
           callback: any
         ) => {
-          await this.runHooks('preCall', {
-            server: this.server,
-            packageDefinition: this.packageDefinition,
-            dependencyContainer: this.dependencyContainer,
-            request: {
-              targetHandlerName: metadata.propertyKey,
-              targetObject: data.instance,
-              targetClass: data.serviceClass,
-            },
-          });
+          try {
+            await this.runHooks('preCall', {
+              server: this.server,
+              packageDefinition: this.packageDefinition,
+              dependencyContainer: this.dependencyContainer,
+              request: {
+                targetHandlerName: metadata.propertyKey,
+                targetObject: data.instance,
+                targetClass: data.serviceClass,
+              },
+            });
 
-          for (const mw of middlewares) {
-            await mw.call(mw, this.makeMiddlewareContext(call, callback));
+            for (const mw of middlewares) {
+              await mw.call(mw, this.makeMiddlewareContext(call, callback));
+            }
+
+            await handlerInstance.invoke(call, callback);
+
+            await this.runHooks('postCall', {
+              server: this.server,
+              packageDefinition: this.packageDefinition,
+              dependencyContainer: this.dependencyContainer,
+              request: {
+                targetHandlerName: metadata.propertyKey,
+                targetObject: data.instance,
+                targetClass: data.serviceClass,
+              },
+            });
+          } catch (e) {
+            ExceptionHandler.handleError(e, call, callback);
           }
-
-          await handlerInstance.invoke(call, callback);
-
-          await this.runHooks('postCall', {
-            server: this.server,
-            packageDefinition: this.packageDefinition,
-            dependencyContainer: this.dependencyContainer,
-            request: {
-              targetHandlerName: metadata.propertyKey,
-              targetObject: data.instance,
-              targetClass: data.serviceClass,
-            },
-          });
         };
 
         serviceImplementations[metadata.propertyKey] = handler.bind(this);
