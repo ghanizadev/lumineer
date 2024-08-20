@@ -7,6 +7,7 @@ import {
   RPC,
   Service,
   StreamParam,
+  UnknownException,
 } from '@cymbaline/core';
 import { Logger } from '@cymbaline/logger';
 import { Writable, Duplex } from 'stream';
@@ -54,6 +55,10 @@ export class ServiceModule {
   ) {
     this.data.push(body);
     this.logger.info('Received: ' + this.data.length);
+
+    if (!body.colorName) {
+      throw new UnknownException('Color name is undefined');
+    }
 
     if (this.data.length > 5) {
       this.data.forEach((d) => {

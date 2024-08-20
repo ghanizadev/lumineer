@@ -156,7 +156,7 @@ export class ProtoGenerator {
     const propertyTypes = Object.values(messageType.properties);
     const refs = Object.values(messageType.refs ?? {}) ?? [];
 
-    let c = 1;
+    let c = 0;
     for (let i = 0; i < refs.length; i++) {
       const subMessageType = refs[i];
 
