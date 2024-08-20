@@ -20,10 +20,13 @@ export type RpcScalar =
   | 'sint64';
 
 export type RpcMessageType = {
-  typeName: string;
-  type: 'message' | 'enum' | 'oneof';
-  properties: Record<string, RpcProperty>;
-  messages: RpcMessageType[];
+  typeName?: string;
+  type?: 'message' | 'enum';
+  properties?: Record<string, RpcProperty>;
+  messages?: RpcMessageType[];
+  blockScoped?: boolean;
+  refs?: Record<string, RpcMessageType>;
+  oneofs?: Record<string, string[]>;
 };
 
 export type RpcProperty = {

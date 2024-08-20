@@ -1,4 +1,10 @@
-import { Message, Enum, PropertyType, MessageRef } from '@cymbaline/core';
+import {
+  Message,
+  Enum,
+  PropertyType,
+  MessageRef,
+  OneOf,
+} from '@cymbaline/core';
 
 @Message()
 export class InputMessageType {
@@ -22,9 +28,26 @@ export class ReturnMessageType {
 }
 
 @Message()
+export class AnotherMessage {
+  @PropertyType('string')
+  status: string;
+}
+
+@Message()
 export class PingRequest {
   @PropertyType('string')
   message: string;
+
+  @OneOf('Color')
+  @PropertyType('string')
+  colorName: string;
+
+  @OneOf('Color')
+  @PropertyType('int32')
+  colorDec: number;
+
+  @MessageRef(AnotherMessage, { blockScoped: true })
+  scoped: AnotherMessage;
 }
 
 @Message()
@@ -35,6 +58,6 @@ export class PingResponse {
   @PropertyType('string')
   randomNumber: number;
 
-  // @MessageRef(MyEnum)
-  enum: MyEnum;
+  @MessageRef(MyEnum)
+  myEnumProperty: MyEnum;
 }

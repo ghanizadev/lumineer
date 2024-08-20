@@ -7,6 +7,8 @@ import {
   RpcMessageType,
 } from './types/message.types';
 
+const IND = '  ';
+
 export class ProtoGenerator {
   private readonly proto: string[] = [];
 
@@ -41,15 +43,27 @@ export class ProtoGenerator {
         instance
       );
 
-      for (const messageType of messages) {
+      for (const message of messages) {
+        if (message.refs) {
+          messages.push(
+            ...Object.values(message.refs).filter((msg) => !msg.blockScoped)
+          );
+        }
+      }
+
+      const messageNameMap: Record<string, RpcMessageType> = {};
+
+      for (const message of messages) {
+        messageNameMap[message.typeName] = message;
+      }
+
+      for (const messageType of Object.values(messageNameMap)) {
         let message: string;
 
         if (messageType.type === 'message')
-          message = this.generateMessageType(messageType);
+          message = this.generateMessageType(messageType).block;
         else if (messageType.type === 'enum')
-          message = this.generateEnumType(messageType);
-        else if (messageType.type === 'oneof')
-          message = this.generateOneOfBlock(messageType);
+          message = this.generateEnumType(messageType).block;
         else throw new Error('Invalid message type: ' + messageType.type);
 
         this.proto.push(message);
@@ -71,7 +85,7 @@ export class ProtoGenerator {
     } = rpcProperties;
 
     const lines = [
-      `${indentation}  rpc ${rpcName} (${serverStream ? 'stream ' : ''}`,
+      `${indentation}${IND}rpc ${rpcName} (${serverStream ? 'stream ' : ''}`,
       `${argumentTypeName}) returns (${clientStream ? 'stream ' : ''}`,
       `${returnTypeName}) {};`,
     ];
@@ -96,64 +110,100 @@ export class ProtoGenerator {
       label = `map<${propertyType.map[0]}, ${propertyType.map[1]}> `;
     }
 
-    return `  ${label}${propertyType.ref ?? propertyType.type} ${
+    return `${label}${propertyType.ref ?? propertyType.type} ${
       propertyType.propertyName
     } = ${index};`;
   }
 
-  private generateOneOfBlock(messageType: RpcMessageType) {
-    const propertyTypes = Object.values(messageType.properties);
-
+  private generateOneOfBlock(
+    typeName: string,
+    propertyTypes: RpcProperty[],
+    num: number,
+    ind = ''
+  ) {
     if (propertyTypes.length <= 1)
-      throw new Error(
-        'OneOf block with a single property: ' + messageType.typeName
-      );
+      throw new Error('OneOf block with a single property: ' + typeName);
 
-    let oneOfBlock = `oneof ${messageType.typeName} {\n`;
-    let i = 0;
-    for (const propertyType of propertyTypes) {
-      oneOfBlock += `  ${this.generatePropertyType(propertyType, ++i)}`;
+    let oneOfBlock = `${ind}oneof ${typeName} {\n`;
+
+    for (let i = 0; i < propertyTypes.length; i++) {
+      const propertyType = propertyTypes[i];
+      oneOfBlock += `${ind}  ${this.generatePropertyType(
+        propertyType,
+        i + num
+      )}\n`;
     }
-    oneOfBlock += '}\n\n';
+    oneOfBlock += `${ind}}\n`;
 
-    return oneOfBlock;
+    return { block: oneOfBlock, entryCount: propertyTypes.length };
   }
 
   private generateEnumType(messageType: RpcMessageType) {
-    let enumType = 'enum';
+    let enumType = `enum ${messageType.typeName} {\n`;
     const propertyTypes = Object.values(messageType.properties);
 
     for (let i = 0; i < propertyTypes.length; i++) {
       const propertyType = propertyTypes[i];
-      enumType += `  ${propertyType.propertyName} = ${i};`;
+      enumType += `  ${propertyType.propertyName} = ${i};\n`;
     }
 
     enumType += '}\n\n';
-    return enumType;
+    return { block: enumType, entryCount: propertyTypes.length };
   }
 
-  private generateMessageType(messageType: RpcMessageType) {
-    let message = `message ${messageType.typeName} {\n`;
+  private generateMessageType(messageType: RpcMessageType, ind = '') {
+    let message = `${ind}message ${messageType.typeName} {\n`;
     const propertyTypes = Object.values(messageType.properties);
+    const refs = Object.values(messageType.refs ?? {}) ?? [];
 
-    for (let i = 0; i < messageType.messages.length; i++) {
-      const subMessageType = messageType.messages[i];
+    let c = 1;
+    for (let i = 0; i < refs.length; i++) {
+      const subMessageType = refs[i];
 
-      if (subMessageType.type === 'oneof')
-        message += this.generateOneOfBlock(subMessageType);
-      else if (subMessageType.type === 'enum')
-        message += this.generateEnumType(subMessageType);
-      else message += this.generateMessageType(messageType.messages[i]);
+      if (!subMessageType.blockScoped) continue;
+
+      if (subMessageType.type === 'enum') {
+        const { block, entryCount } = this.generateEnumType(subMessageType);
+        message += block;
+        c += entryCount;
+      } else {
+        const { block, entryCount } = this.generateMessageType(
+          subMessageType,
+          ind + IND
+        );
+        message += block;
+        c += entryCount;
+      }
     }
 
-    for (let i = 0; i < propertyTypes.length; i++) {
-      const propertyType = propertyTypes[i];
-      const property = this.generatePropertyType(propertyType, i + 1);
-      message += `  ${property}\n`;
+    let properties = [...propertyTypes];
+
+    for (const oneofTypeName in messageType.oneofs) {
+      const toAdd = properties.filter((p) =>
+        messageType.oneofs[oneofTypeName].includes(p.propertyName)
+      );
+      properties = properties.filter(
+        (p) => !messageType.oneofs[oneofTypeName].includes(p.propertyName)
+      );
+
+      const { block, entryCount } = this.generateOneOfBlock(
+        oneofTypeName,
+        toAdd,
+        c,
+        ind + IND
+      );
+      message += block;
+      c += entryCount;
     }
 
-    message += '}\n';
-    return message;
+    for (let i = 0; i < properties.length; i++) {
+      const propertyType = properties[i];
+      const property = this.generatePropertyType(propertyType, ++c);
+      message += `${ind}  ${property}\n`;
+    }
+
+    message += `${ind}}\n`;
+    return { block: message, entryCount: c };
   }
 
   public writeProtoFile(protoContents: string) {

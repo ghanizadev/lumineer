@@ -7,73 +7,70 @@ export type TypeOptions = {
 };
 
 export const Message = (options?: TypeOptions) => {
-  return (constructor: { new (...args: any[]): {} }) => {
-    let metadata: RpcMessageType = Reflect.getMetadata(
-      SERVICE_MESSAGE_TOKEN,
-      constructor
-    );
+  return (target: { new (...args: any[]): {} }) => {
+    let metadata: RpcMessageType =
+      Reflect.getMetadata(SERVICE_MESSAGE_TOKEN, target) ?? {};
 
-    if (!metadata) {
-      metadata = {
-        type: 'message',
-        typeName: constructor.name,
-        properties: {},
-        messages: [],
-      };
-    }
+    metadata = {
+      ...metadata,
+      type: 'message',
+      typeName: target.name,
+    };
 
     if (options) {
       metadata = _.merge(metadata, options);
     }
 
-    Reflect.defineMetadata(SERVICE_MESSAGE_TOKEN, metadata, constructor);
+    Reflect.defineMetadata(SERVICE_MESSAGE_TOKEN, metadata, target);
   };
 };
 
 export const Enum = (options?: TypeOptions) => {
-  return (constructor: { new (...args: any[]): {} }) => {
-    let metadata: RpcMessageType = Reflect.getMetadata(
-      SERVICE_MESSAGE_TOKEN,
-      constructor
-    );
+  return (target: { new (...args: any[]): {} }) => {
+    let metadata: RpcMessageType =
+      Reflect.getMetadata(SERVICE_MESSAGE_TOKEN, target) ?? {};
 
-    if (!metadata) {
-      metadata = {
-        type: 'enum',
-        typeName: constructor.name,
-        properties: {},
-        messages: [],
-      };
-    }
+    const proto = new target();
 
-    if (options) {
-      metadata = _.merge(metadata, options);
-    }
-
-    Reflect.defineMetadata(SERVICE_MESSAGE_TOKEN, metadata, constructor);
-  };
-};
-
-export const OneOf = (options?: TypeOptions) => {
-  return (constructor: { new (...args: any[]): {} }) => {
-    let metadata: RpcMessageType = Reflect.getMetadata(
-      SERVICE_MESSAGE_TOKEN,
-      constructor
-    );
-
-    if (!metadata) {
-      metadata = {
-        type: 'oneof',
-        typeName: constructor.name,
-        properties: {},
-        messages: [],
-      };
-    }
+    metadata = {
+      ...metadata,
+      type: 'enum',
+      typeName: target.name,
+      blockScoped: false,
+      properties: Object.keys(proto)
+        .map((key) => ({ propertyName: key, type: 'string' }))
+        .reduce((p, c) => ({ ...p, [c.propertyName]: c }), {}),
+    };
 
     if (options) {
       metadata = _.merge(metadata, options);
     }
 
-    Reflect.defineMetadata(SERVICE_MESSAGE_TOKEN, metadata, constructor);
+    Reflect.defineMetadata(SERVICE_MESSAGE_TOKEN, metadata, target);
   };
 };
+
+// export const OneOf = (options?: TypeOptions) => {
+//   return (target: { new (...args: any[]): {} }) => {
+//     let metadata: RpcMessageType = Reflect.getMetadata(
+//       SERVICE_MESSAGE_TOKEN,
+//       target
+//     );
+//
+//     if (!metadata) {
+//       metadata = {
+//         type: 'oneof',
+//         typeName: target.name,
+//         blockScoped: true,
+//         properties: {},
+//         messages: [],
+//       };
+//     }
+//
+//     if (options) {
+//       metadata = _.merge(metadata, options);
+//     }
+//
+//     Reflect.defineMetadata(SERVICE_MESSAGE_TOKEN, metadata, target);
+//   };
+// };

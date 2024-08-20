@@ -1,5 +1,10 @@
-import { SERVICE_MESSAGE_TOKEN } from '../constants';
-import { RpcMessageType, RpcProperty, RpcScalar } from '../types/message.types';
+import { SERVICE_MESSAGE_TOKEN, SERVICE_RPC_TOKEN } from '../constants';
+import {
+  RpcMessageType,
+  RpcMetadata,
+  RpcProperty,
+  RpcScalar,
+} from '../types/message.types';
 import * as _ from 'lodash';
 
 export type DecoratorFunction = (target: any, propertyKey: string) => void;
@@ -13,6 +18,10 @@ export type PropertyTypeOptions = {
   required?: boolean;
   repeated?: boolean;
   options?: boolean;
+};
+
+export type PropertyRefOptions = {
+  blockScoped?: boolean;
 };
 
 export function PropertyType(
@@ -95,26 +104,38 @@ export function PropertyType(
 
 export const MessageRef = (
   ref: { new (): {} },
-  options?: PropertyTypeOptions
+  options?: PropertyRefOptions
 ) => {
   return (target: any, propertyKey: string) => {
-    let metadata: RpcMessageType = Reflect.getMetadata(
+    const typeInstance = new ref();
+
+    let propertiesMetadata = Reflect.getMetadata(
       SERVICE_MESSAGE_TOKEN,
-      target.constructor
+      typeInstance
     );
+    let messageMetadata = Reflect.getMetadata(SERVICE_MESSAGE_TOKEN, ref);
 
-    let property: RpcProperty | undefined = metadata?.properties[propertyKey];
+    let message: RpcMessageType = _.merge(messageMetadata, propertiesMetadata);
+    let messages = Reflect.getMetadata('message:refs', target) ?? {};
 
-    if (!property) {
-      property = {
-        propertyName: propertyKey,
-        ref: ref.name,
-      };
-    }
+    messages[propertyKey] = message;
 
     if (options) {
-      property = _.merge(property, options);
+      message = _.merge(message, options);
+    } else {
+      message = _.merge(message, { blockScoped: false });
     }
+
+    Reflect.defineMetadata('message:refs', messages, target);
+
+    let metadata: RpcMessageType = Reflect.getMetadata(
+      SERVICE_MESSAGE_TOKEN,
+      target
+    );
+    let property: RpcProperty = {
+      ref: message.typeName,
+      propertyName: propertyKey,
+    };
 
     metadata = _.merge(metadata, {
       properties: {
@@ -122,6 +143,32 @@ export const MessageRef = (
       },
     });
 
-    Reflect.defineMetadata(SERVICE_MESSAGE_TOKEN, metadata, target.constructor);
+    Reflect.defineMetadata(SERVICE_MESSAGE_TOKEN, metadata, target);
+  };
+};
+
+export const OneOf = (typeName: string) => {
+  return (target: any, propertyKey: string) => {
+    let metadata: RpcMessageType = Reflect.getMetadata(
+      SERVICE_MESSAGE_TOKEN,
+      target
+    );
+
+    if (!metadata?.oneofs) {
+      metadata = {
+        ...(metadata ?? {}),
+        oneofs: {
+          [typeName]: [propertyKey],
+        },
+      };
+    } else {
+      metadata = _.merge(metadata, {
+        oneofs: {
+          [typeName]: [propertyKey, ...(metadata.oneofs[typeName] ?? [])],
+        },
+      });
+    }
+
+    Reflect.defineMetadata(SERVICE_MESSAGE_TOKEN, metadata, target);
   };
 };

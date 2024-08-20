@@ -1,6 +1,6 @@
 import { SERVICE_MESSAGE_TOKEN, SERVICE_RPC_TOKEN } from '../constants';
 import _ = require('lodash');
-import { RpcMetadata } from '../types/message.types';
+import { RpcMessageType, RpcMetadata } from '../types/message.types';
 
 export type RpcOptions = {};
 
@@ -51,7 +51,11 @@ const rpcMessageType =
     );
     let messageMetadata = Reflect.getMetadata(SERVICE_MESSAGE_TOKEN, type);
 
-    let message = _.merge(messageMetadata, propertiesMetadata);
+    const refs: Record<string, RpcMessageType> =
+      Reflect.getMetadata('message:refs', typeInstance) ?? {};
+    let message = _.merge(messageMetadata, propertiesMetadata, {
+      refs,
+    });
     let messages = Reflect.getMetadata('service:messages', target) ?? [];
 
     messages.push(message);
