@@ -4,7 +4,9 @@ import { RpcMessageType, RpcMetadata } from '../types/message.types';
 
 export type RpcOptions = {};
 
-export type RPCArgumentType = {};
+export type ArgumentOptions = {
+  stream?: boolean;
+};
 
 export const RPC = (options: RpcOptions = {}) => {
   return (target: any, propertyKey: string) => {
@@ -22,7 +24,11 @@ export const RPC = (options: RpcOptions = {}) => {
 };
 
 const rpcMessageType =
-  (type: { new (...args: any[]): {} }, argType: 'return' | 'argument') =>
+  (
+    type: { new (...args: any[]): {} },
+    argType: 'return' | 'argument',
+    options?: ArgumentOptions
+  ) =>
   (target: any, propertyKey: string) => {
     let metadata: Record<string, RpcMetadata> =
       Reflect.getMetadata(SERVICE_RPC_TOKEN, target) ?? {};
@@ -35,8 +41,22 @@ const rpcMessageType =
 
     if (!rpcMetadata) {
       rpcMetadata = {
+        ...rpcMetadata,
         rpcName: propertyKey,
       };
+    }
+
+    if (options?.stream) {
+      if (argType === 'argument')
+        rpcMetadata = {
+          ...rpcMetadata,
+          clientStream: true,
+        };
+      else
+        rpcMetadata = {
+          ...rpcMetadata,
+          serverStream: true,
+        };
     }
 
     rpcMetadata[argType + 'TypeName'] = type.name;
@@ -63,10 +83,16 @@ const rpcMessageType =
     Reflect.defineMetadata('service:messages', messages, target);
   };
 
-export const ArgumentType = (argumentType: { new (...args: any[]): {} }) => {
-  return rpcMessageType(argumentType, 'argument');
+export const ArgumentType = (
+  argumentType: { new (...args: any[]): {} },
+  options?: ArgumentOptions
+) => {
+  return rpcMessageType(argumentType, 'argument', options);
 };
 
-export const ReturnType = (returnType: { new (...args: any[]): {} }) => {
-  return rpcMessageType(returnType, 'return');
+export const ReturnType = (
+  returnType: { new (...args: any[]): {} },
+  options?: ArgumentOptions
+) => {
+  return rpcMessageType(returnType, 'return', options);
 };

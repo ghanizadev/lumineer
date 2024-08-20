@@ -14,8 +14,8 @@ export class InputMessageType {
 
 @Enum()
 export class MyEnum {
-  readonly YES = 0;
-  readonly NO = 1;
+  static readonly YES = 0;
+  static readonly NO = 1;
 }
 
 @Message()

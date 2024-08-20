@@ -1,10 +1,11 @@
 import * as gRPC from '@grpc/grpc-js';
 import { SERVICE_RPC_ARGS_TOKEN } from './constants';
 import { Logger } from '@cymbaline/logger';
+import { RpcMetadata } from './types/message.types';
 
 export type HandlerContext = {
   data: any;
-  metadata: any;
+  metadata: RpcMetadata;
 };
 
 export type HandlerCall<T = any> = T;
@@ -26,13 +27,9 @@ export class Handler {
     const start = performance.now();
 
     try {
-      const args = this.makeArguments(
-        call,
-        data.instance,
-        metadata.propertyKey
-      );
+      const args = this.makeArguments(call, data.instance, metadata.rpcName);
 
-      const fn = data.instance[metadata.propertyKey].bind(data.instance);
+      const fn = data.instance[metadata.rpcName].bind(data.instance);
 
       switch (this.getRequestType(metadata)) {
         case 'bidirectionalStream':
@@ -52,7 +49,7 @@ export class Handler {
       const end = performance.now();
 
       this.logger.info(
-        `RPC to ${data.name}.${metadata.propertyKey} done in ${(
+        `RPC to ${data.name}.${metadata.rpcName} done in ${(
           end - start
         ).toFixed(3)}ms`
       );
@@ -62,9 +59,7 @@ export class Handler {
       } else {
         call.emit('error', { status: gRPC.status.INTERNAL });
       }
-      this.logger.error(
-        `RPC to ${data.name}.${metadata.propertyKey} failed: ${e}`
-      );
+      this.logger.error(`RPC to ${data.name}.${metadata.rpcName} failed: ${e}`);
     }
   }
 
@@ -99,16 +94,12 @@ export class Handler {
     return result;
   }
 
-  private getRequestType(serviceMetadata: any) {
-    if (serviceMetadata.returnType.metadata.stream) {
-      if (serviceMetadata.inputType.metadata.stream)
-        return 'bidirectionalStream';
-
+  private getRequestType(serviceMetadata: RpcMetadata) {
+    if (serviceMetadata.serverStream) {
+      if (serviceMetadata.clientStream) return 'bidirectionalStream';
       return 'serverStream';
     }
-
-    if (serviceMetadata.inputType.metadata.stream) return 'clientStream';
-
+    if (serviceMetadata.clientStream) return 'clientStream';
     return 'unary';
   }
 
@@ -124,7 +115,7 @@ export class Handler {
         const argMetadata = Reflect.getMetadata(
           SERVICE_RPC_ARGS_TOKEN,
           data.instance,
-          metadata.propertyKey
+          metadata.rpcName
         );
 
         let bodyIndex = -1;
@@ -144,9 +135,7 @@ export class Handler {
       });
     } catch (e) {
       call.emit('error', { code: gRPC.status.INTERNAL, message: e.message });
-      this.logger.error(
-        `RPC to ${data.name}.${metadata.propertyKey} failed: ${e}`
-      );
+      this.logger.error(`RPC to ${data.name}.${metadata.rpcName} failed: ${e}`);
     }
   }
 
@@ -167,9 +156,7 @@ export class Handler {
         await Promise.resolve(fn(...args));
       }
     } catch (e) {
-      this.logger.error(
-        `RPC to ${data.name}.${metadata.propertyKey} failed: ${e}`
-      );
+      this.logger.error(`RPC to ${data.name}.${metadata.rpcName} failed: ${e}`);
       call.emit('error', { code: gRPC.status.INTERNAL });
     }
   }
@@ -186,7 +173,7 @@ export class Handler {
         const argMetadata = Reflect.getMetadata(
           SERVICE_RPC_ARGS_TOKEN,
           data.instance,
-          metadata.propertyKey
+          metadata.rpcName
         );
 
         let bodyIndex = -1;
@@ -209,9 +196,7 @@ export class Handler {
       });
     } catch (e) {
       callback(e);
-      this.logger.error(
-        `RPC to ${data.name}.${metadata.propertyKey} failed: ${e}`
-      );
+      this.logger.error(`RPC to ${data.name}.${metadata.rpcName} failed: ${e}`);
     }
   }
 
@@ -227,9 +212,7 @@ export class Handler {
       callback(null, response);
     } catch (e) {
       callback(e);
-      this.logger.error(
-        `RPC to ${data.name}.${metadata.propertyKey} failed: ${e}`
-      );
+      this.logger.error(`RPC to ${data.name}.${metadata.rpcName} failed: ${e}`);
     }
   }
 }

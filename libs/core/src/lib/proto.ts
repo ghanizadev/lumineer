@@ -85,8 +85,8 @@ export class ProtoGenerator {
     } = rpcProperties;
 
     const lines = [
-      `${indentation}${IND}rpc ${rpcName} (${serverStream ? 'stream ' : ''}`,
-      `${argumentTypeName}) returns (${clientStream ? 'stream ' : ''}`,
+      `${indentation}${IND}rpc ${rpcName} (${clientStream ? 'stream ' : ''}`,
+      `${argumentTypeName}) returns (${serverStream ? 'stream ' : ''}`,
       `${returnTypeName}) {};`,
     ];
 

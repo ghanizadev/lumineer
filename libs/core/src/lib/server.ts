@@ -21,6 +21,7 @@ import {
 } from './constants';
 import { Handler } from './handler';
 import { ExceptionHandler } from './exception-handler';
+import { RpcMetadata } from './types/message.types';
 
 type ServiceType = { new (...args: any[]): {} };
 
@@ -206,17 +207,20 @@ export class GRPCServer {
 
       const serviceImplementations: gRPC.UntypedServiceImplementation = {};
 
-      for (const key of Reflect.getMetadataKeys(data.instance)) {
-        if (!key.startsWith(SERVICE_RPC_TOKEN)) continue;
+      const rpcMap: Record<string, RpcMetadata> = Reflect.getMetadata(
+        SERVICE_RPC_TOKEN,
+        data.instance
+      );
 
-        const metadata = Reflect.getMetadata(key, data.instance);
+      for (const key in rpcMap) {
+        const rpc = rpcMap[key];
 
         await this.runHooks('preBind', {
           server: this.server,
           packageDefinition: this.packageDefinition,
           dependencyContainer: this.dependencyContainer,
           request: {
-            targetHandlerName: metadata.propertyKey,
+            targetHandlerName: rpc.rpcName,
             targetObject: data.instance,
             targetClass: data.serviceClass,
           },
@@ -227,10 +231,10 @@ export class GRPCServer {
 
         const middlewares = [
           ...(data.middlewares['*'] ?? []),
-          ...(instanceMiddlewares[metadata.propertyKey] ?? []),
+          ...(instanceMiddlewares[rpc.rpcName] ?? []),
         ].map<MiddlewareHandler>(this.processMiddleware.bind(this));
 
-        const handlerInstance = new Handler({ data, metadata });
+        const handlerInstance = new Handler({ data, metadata: rpc });
 
         const handler: gRPC.UntypedHandleCall = async (
           call: any,
@@ -242,7 +246,7 @@ export class GRPCServer {
               packageDefinition: this.packageDefinition,
               dependencyContainer: this.dependencyContainer,
               request: {
-                targetHandlerName: metadata.propertyKey,
+                targetHandlerName: rpc.rpcName,
                 targetObject: data.instance,
                 targetClass: data.serviceClass,
               },
@@ -259,7 +263,7 @@ export class GRPCServer {
               packageDefinition: this.packageDefinition,
               dependencyContainer: this.dependencyContainer,
               request: {
-                targetHandlerName: metadata.propertyKey,
+                targetHandlerName: rpc.rpcName,
                 targetObject: data.instance,
                 targetClass: data.serviceClass,
               },
@@ -269,7 +273,7 @@ export class GRPCServer {
           }
         };
 
-        serviceImplementations[metadata.propertyKey] = handler.bind(this);
+        serviceImplementations[rpc.rpcName] = handler.bind(this);
       }
 
       this.server.addService(serviceDef, serviceImplementations);

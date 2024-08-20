@@ -5,7 +5,7 @@ export class GrpcException extends Error {
 
   public toException() {
     return {
-      message: this.message,
+      details: this.message,
       code: this.code,
     };
   }

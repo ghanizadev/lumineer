@@ -30,14 +30,15 @@ export const Enum = (options?: TypeOptions) => {
     let metadata: RpcMessageType =
       Reflect.getMetadata(SERVICE_MESSAGE_TOKEN, target) ?? {};
 
-    const proto = new target();
+    if (!Object.keys(target).length)
+      throw new Error('Enum keys must be static');
 
     metadata = {
       ...metadata,
       type: 'enum',
       typeName: target.name,
       blockScoped: false,
-      properties: Object.keys(proto)
+      properties: Object.keys(target)
         .map((key) => ({ propertyName: key, type: 'string' }))
         .reduce((p, c) => ({ ...p, [c.propertyName]: c }), {}),
     };
@@ -49,28 +50,3 @@ export const Enum = (options?: TypeOptions) => {
     Reflect.defineMetadata(SERVICE_MESSAGE_TOKEN, metadata, target);
   };
 };
-
-// export const OneOf = (options?: TypeOptions) => {
-//   return (target: { new (...args: any[]): {} }) => {
-//     let metadata: RpcMessageType = Reflect.getMetadata(
-//       SERVICE_MESSAGE_TOKEN,
-//       target
-//     );
-//
-//     if (!metadata) {
-//       metadata = {
-//         type: 'oneof',
-//         typeName: target.name,
-//         blockScoped: true,
-//         properties: {},
-//         messages: [],
-//       };
-//     }
-//
-//     if (options) {
-//       metadata = _.merge(metadata, options);
-//     }
-//
-//     Reflect.defineMetadata(SERVICE_MESSAGE_TOKEN, metadata, target);
-//   };
-// };

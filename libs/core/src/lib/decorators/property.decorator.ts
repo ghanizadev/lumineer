@@ -1,10 +1,5 @@
-import { SERVICE_MESSAGE_TOKEN, SERVICE_RPC_TOKEN } from '../constants';
-import {
-  RpcMessageType,
-  RpcMetadata,
-  RpcProperty,
-  RpcScalar,
-} from '../types/message.types';
+import { SERVICE_MESSAGE_TOKEN } from '../constants';
+import { RpcMessageType, RpcProperty, RpcScalar } from '../types/message.types';
 import * as _ from 'lodash';
 
 export type DecoratorFunction = (target: any, propertyKey: string) => void;
