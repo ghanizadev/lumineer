@@ -4,44 +4,26 @@
   "sourceRoot": "apps/example/src",
   "projectType": "application",
   "tags": [],
-  "implicitDependencies": ["logger", "server-reflection", "client"],
   "targets": {
     "build": {
-      "executor": "@nx/esbuild:esbuild",
+      "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
-      "defaultConfiguration": "production",
       "options": {
-        "platform": "node",
         "outputPath": "dist/apps/example",
-        "format": ["cjs"],
-        "bundle": false,
         "main": "apps/example/src/main.ts",
         "tsConfig": "apps/example/tsconfig.app.json",
-        "assets": ["apps/example/src/assets"],
-        "generatePackageJson": true,
-        "esbuildOptions": {
-          "sourcemap": true,
-          "outExtension": {
-            ".js": ".js"
-          }
-        }
-      },
-      "configurations": {
-        "development": {},
-        "production": {
-          "esbuildOptions": {
-            "sourcemap": false,
-            "outExtension": {
-              ".js": ".js"
-            }
-          }
-        }
+        "assets": []
       }
     },
     "serve": {
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
-      "dependsOn": ["build", "core:build", "logger:build", "server-reflection:build"],
+      "dependsOn": [
+        "build",
+        "core:build",
+        "logger:build",
+        "server-reflection:build"
+      ],
       "options": {
         "buildTarget": "example:build",
         "runBuildTargetDependencies": false

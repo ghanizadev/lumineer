@@ -3,6 +3,7 @@ import 'reflect-metadata';
 import { GRPCServer, ServerCredentials } from '@cymbaline/core';
 import { ServerReflectionPlugin } from '@cymbaline/server-reflection';
 import { ServiceModule } from './services/service-a/service';
+import { ServiceB } from './services/service-b/service';
 import { GrpcClientPlugin } from '@cymbaline/client';
 import { ChannelCredentials } from '@grpc/grpc-js';
 
@@ -10,7 +11,7 @@ const PORT = process.env.PORT ?? 50051;
 
 const main = async () => {
   const server = new GRPCServer({
-    services: [ServiceModule],
+    services: [ServiceModule, ServiceB],
     config: {
       logger: true,
       credentials: ServerCredentials.createInsecure(),

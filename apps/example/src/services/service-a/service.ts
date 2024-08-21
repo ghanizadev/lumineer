@@ -13,6 +13,7 @@ import { Logger } from '@cymbaline/logger';
 import { Writable, Duplex } from 'stream';
 import {
   InputMessageType,
+  MyEnum,
   PingRequest,
   PingResponse,
   ReturnMessageType,
@@ -25,7 +26,7 @@ import {
 export class ServiceModule {
   private data: PingRequest[] = [];
 
-  constructor(@InjectLogger() private readonly logger: Logger) {}
+  constructor(private readonly logger: Logger) {}
 
   @RPC()
   @ReturnType(ReturnMessageType)
@@ -48,11 +49,11 @@ export class ServiceModule {
 
   @RPC()
   @ReturnType(PingResponse)
-  @ArgumentType(PingRequest)
+  @ArgumentType(PingRequest, { stream: true })
   private async pingPong(
     @BodyParam() body: PingRequest,
     @StreamParam() stream: Duplex
-  ) {
+  ): Promise<PingResponse> {
     this.data.push(body);
     this.logger.info('Received: ' + this.data.length);
 
@@ -68,6 +69,7 @@ export class ServiceModule {
       return {
         pong: 'pong',
         randomNumber: Math.floor(Math.random() * 10000),
+        myEnumProperty: MyEnum.NO,
       };
     }
   }
