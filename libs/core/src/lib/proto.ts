@@ -19,12 +19,17 @@ export class ProtoGenerator {
   ) {}
 
   public makeProtoFile(serviceInstances: Record<string, any>) {
-    this.proto.push('syntax = "proto3";', '', `package ${this.packageName};`);
+    this.proto.push(
+      'syntax = "proto3";',
+      '',
+      `package ${this.packageName};`,
+      ''
+    );
 
     for (const key in serviceInstances) {
       const { instance, name } = serviceInstances[key];
 
-      this.proto.push('', `service ${name} {`);
+      this.proto.push(`service ${name} {`);
 
       const rpcMap: Record<string, RpcMetadata> = Reflect.getMetadata(
         SERVICE_RPC_TOKEN,
@@ -36,7 +41,7 @@ export class ProtoGenerator {
         this.proto.push(rpc);
       }
 
-      this.proto.push('}');
+      this.proto.push('}', '');
 
       const messages: RpcMessageType[] = Reflect.getMetadata(
         'service:messages',
@@ -69,8 +74,6 @@ export class ProtoGenerator {
         this.proto.push(message);
       }
     }
-
-    this.proto.push('');
 
     return this.proto.join('\n');
   }
@@ -147,7 +150,8 @@ export class ProtoGenerator {
       enumType += `  ${propertyType.propertyName} = ${i};\n`;
     }
 
-    enumType += '}\n\n';
+    enumType += '}\n';
+
     return { block: enumType, entryCount: propertyTypes.length };
   }
 
@@ -156,7 +160,7 @@ export class ProtoGenerator {
     const propertyTypes = Object.values(messageType.properties);
     const refs = Object.values(messageType.refs ?? {}) ?? [];
 
-    let c = 0;
+    let cursor = 1;
     for (let i = 0; i < refs.length; i++) {
       const subMessageType = refs[i];
 
@@ -165,14 +169,14 @@ export class ProtoGenerator {
       if (subMessageType.type === 'enum') {
         const { block, entryCount } = this.generateEnumType(subMessageType);
         message += block;
-        c += entryCount;
+        cursor += entryCount;
       } else {
         const { block, entryCount } = this.generateMessageType(
           subMessageType,
           ind + IND
         );
         message += block;
-        c += entryCount;
+        cursor += entryCount;
       }
     }
 
@@ -189,21 +193,21 @@ export class ProtoGenerator {
       const { block, entryCount } = this.generateOneOfBlock(
         oneofTypeName,
         toAdd,
-        c,
+        cursor,
         ind + IND
       );
       message += block;
-      c += entryCount;
+      cursor += entryCount;
     }
 
     for (let i = 0; i < properties.length; i++) {
       const propertyType = properties[i];
-      const property = this.generatePropertyType(propertyType, ++c);
+      const property = this.generatePropertyType(propertyType, cursor++);
       message += `${ind}  ${property}\n`;
     }
 
     message += `${ind}}\n`;
-    return { block: message, entryCount: c };
+    return { block: message, entryCount: cursor - 1 };
   }
 
   public writeProtoFile(protoContents: string) {
