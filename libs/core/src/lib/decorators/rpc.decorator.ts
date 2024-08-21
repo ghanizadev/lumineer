@@ -1,5 +1,5 @@
 import { SERVICE_MESSAGE_TOKEN, SERVICE_RPC_TOKEN } from '../constants';
-import _ = require('lodash');
+import * as _ from 'lodash';
 import { RpcMessageType, RpcMetadata } from '../types/message.types';
 
 export type RpcOptions = {};
