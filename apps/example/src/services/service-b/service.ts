@@ -1,30 +1,55 @@
-import { Database } from '../../database';
 import {
   ArgumentType,
   BodyParam,
+  NotFoundException,
   ReturnType,
   RPC,
   Service,
 } from '@cymbaline/core';
-import { ServiceBInput, ServiceBOutput } from './dto';
+import { DataSource } from 'typeorm';
+import {
+  GetUserInput,
+  ServiceBInput,
+  ServiceBOutput,
+  UserMessage,
+} from './dto';
+import { User } from './model';
 
 @Service()
 export class ServiceB {
-  constructor(private readonly db: Database) {}
+  constructor(private readonly dataSource: DataSource) {}
 
   @RPC()
   @ArgumentType(ServiceBInput)
   @ReturnType(ServiceBOutput)
-  private async makeUsername(
+  private async createUser(
     @BodyParam() body: ServiceBInput
   ): Promise<ServiceBOutput> {
+    const user = new User();
+    user.name = body.name;
+    user.email = body.email;
+    user.password = body.password;
+
+    await this.dataSource.mongoManager.save(user);
+
     return {
-      username:
-        body.name.toLowerCase() +
-        '#' +
-        Math.floor(Math.random() * 10000)
-          .toString()
-          .padStart(4, '0'),
+      id: user._id.toString(),
+    };
+  }
+
+  @RPC()
+  @ArgumentType(GetUserInput)
+  @ReturnType(UserMessage)
+  private async getUser(@BodyParam() body: GetUserInput): Promise<UserMessage> {
+    const user = await this.dataSource.mongoManager.findOne(User, {
+      where: { $or: [{ email: body.email }, { _id: body.id }] },
+    });
+
+    if (!user) throw new NotFoundException('User not found');
+
+    return {
+      ...user,
+      id: user._id.toString(),
     };
   }
 }

@@ -23,10 +23,15 @@ import { Handler } from './handler';
 import { ExceptionHandler } from './exception-handler';
 import { RpcMetadata } from './types/message.types';
 
-type ServiceType = { new (...args: any[]): {} };
+type ClassConstructor<T = {}> = { new (...args: any[]): T };
 
 export type GRPCServerOptions = {
-  services: ServiceType[];
+  services: ClassConstructor[];
+  providers?: {
+    provide: ClassConstructor;
+    useValue?: any;
+    useClass?: ClassConstructor;
+  }[];
   config?: {
     proto?: {
       path?: string;
@@ -38,6 +43,7 @@ export type GRPCServerOptions = {
 };
 
 const DEFAULT_OPTIONS: Partial<GRPCServerOptions> = {
+  providers: [],
   config: {
     proto: {
       path: path.resolve(process.cwd(), '.cymbaline'),
@@ -84,6 +90,20 @@ export class GRPCServer {
       packageDefinition: this.packageDefinition,
       dependencyContainer: this.dependencyContainer,
     });
+
+    for (const provider of this.options.providers) {
+      const dependencyProvider: any = {};
+
+      if (provider.useClass) {
+        dependencyProvider.useClass = provider.useClass;
+      } else if (provider.useValue) {
+        dependencyProvider.useValue = await provider.useValue;
+      } else {
+        throw new Error('Invalid provider');
+      }
+
+      this.dependencyContainer.register(provider.provide, dependencyProvider);
+    }
 
     await this.parseServices(this.options.services);
 
@@ -159,7 +179,7 @@ export class GRPCServer {
     ).catch((e) => console.error(e));
   }
 
-  private async parseServices(services: ServiceType[]) {
+  private async parseServices(services: ClassConstructor[]) {
     for (const service of services) {
       const start = performance.now();
 

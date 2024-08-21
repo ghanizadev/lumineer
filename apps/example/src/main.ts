@@ -6,12 +6,20 @@ import { ServiceModule } from './services/service-a/service';
 import { ServiceB } from './services/service-b/service';
 import { GrpcClientPlugin } from '@cymbaline/client';
 import { ChannelCredentials } from '@grpc/grpc-js';
+import { DataSource } from 'typeorm';
+import { getDataSource } from './database';
 
 const PORT = process.env.PORT ?? 50051;
 
 const main = async () => {
   const server = new GRPCServer({
     services: [ServiceModule, ServiceB],
+    providers: [
+      {
+        provide: DataSource,
+        useValue: getDataSource(),
+      },
+    ],
     config: {
       logger: true,
       credentials: ServerCredentials.createInsecure(),

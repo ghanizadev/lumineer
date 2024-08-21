@@ -30,7 +30,8 @@
       },
       "configurations": {
         "development": {
-          "buildTarget": "example:build:development"
+          "buildTarget": "example:build:development",
+          "runBuildTargetDependencies": true
         },
         "production": {
           "buildTarget": "example:build:production"
