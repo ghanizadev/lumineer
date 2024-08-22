@@ -43,39 +43,48 @@ export class ProtoGenerator {
 
       this.proto.push('}', '');
 
-      const messages: RpcMessageType[] = Reflect.getMetadata(
+      const messageTypes: RpcMessageType[] = Reflect.getMetadata(
         'service:messages',
         instance
       );
 
-      for (const message of messages) {
+      for (const message of messageTypes) {
         if (message.refs) {
-          messages.push(
+          messageTypes.push(
             ...Object.values(message.refs).filter((msg) => !msg.blockScoped)
           );
         }
+
+        for (const property of Object.values(message.properties)) {
+          if (property.type === 'map' && typeof property.map[1] !== 'string') {
+            const typeMeta: RpcMessageType = Reflect.getMetadata(
+              SERVICE_MESSAGE_TOKEN,
+              property.map[1]
+            );
+            if (!typeMeta) throw new Error('Meta not found');
+            messageTypes.push(typeMeta);
+          }
+        }
       }
 
-      const messageNameMap: Record<string, RpcMessageType> = {};
-
-      for (const message of messages) {
-        messageNameMap[message.typeName] = message;
-      }
-
-      for (const messageType of Object.values(messageNameMap)) {
-        let message: string;
-
-        if (messageType.type === 'message')
-          message = this.generateMessageType(messageType).block;
-        else if (messageType.type === 'enum')
-          message = this.generateEnumType(messageType).block;
-        else throw new Error('Invalid message type: ' + messageType.type);
-
-        this.proto.push(message);
+      for (const messageType of messageTypes) {
+        this.processMessageType(messageType);
       }
     }
 
     return this.proto.join('\n');
+  }
+
+  private processMessageType(messageType: RpcMessageType) {
+    let message: string;
+
+    if (messageType.type === 'message')
+      message = this.generateMessageType(messageType).block;
+    else if (messageType.type === 'enum')
+      message = this.generateEnumType(messageType).block;
+    else throw new Error('Invalid message type: ' + messageType.type);
+
+    this.proto.push(message);
   }
 
   private generateRpc(rpcProperties: RpcMetadata, indentation = '') {
@@ -108,9 +117,24 @@ export class ProtoGenerator {
       label = 'repeated ';
     }
 
-    if (propertyType.map?.length) {
+    if (propertyType.type === 'map') {
       if (label) throw new Error('More than one label decorator!');
-      label = `map<${propertyType.map[0]}, ${propertyType.map[1]}> `;
+
+      let [key, value] = propertyType.map;
+
+      if (!key || !value) throw new Error('Map needs a valid key and value');
+
+      if (typeof value !== 'string') {
+        const typeMeta: RpcMessageType = Reflect.getMetadata(
+          SERVICE_MESSAGE_TOKEN,
+          value
+        );
+        if (!typeMeta) throw new Error('Meta not found');
+        value = typeMeta.typeName;
+      }
+
+      label = `map<${key}, ${value}> `;
+      return `${label} ${propertyType.propertyName} = ${index};`;
     }
 
     return `${label}${propertyType.ref ?? propertyType.type} ${

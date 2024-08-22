@@ -19,12 +19,21 @@ export class MyEnum {
 }
 
 @Message()
-export class ReturnMessageType {
+export class MappedMessageType {
   @PropertyType('string')
   status: string;
 
   @PropertyType('string')
   message: string;
+}
+
+@Message()
+export class ReturnMessageType {
+  @PropertyType('string')
+  status: string;
+
+  @PropertyType('map', { key: 'string', value: MappedMessageType })
+  message: { [key: string]: string };
 }
 
 @Message()

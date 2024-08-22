@@ -7,7 +7,7 @@ import { ServiceB } from './services/service-b/service';
 import { GrpcClientPlugin } from '@cymbaline/client';
 import { ChannelCredentials } from '@grpc/grpc-js';
 import { DataSource } from 'typeorm';
-import { getDataSource } from './database';
+import { DatabaseConnection } from './database';
 
 const PORT = process.env.PORT ?? 50051;
 
@@ -17,7 +17,7 @@ const main = async () => {
     providers: [
       {
         provide: DataSource,
-        useValue: getDataSource(),
+        useValue: DatabaseConnection.configure(),
       },
     ],
     config: {

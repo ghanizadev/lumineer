@@ -31,10 +31,10 @@ export type RpcMessageType = {
 
 export type RpcProperty = {
   propertyName: string;
-  type?: RpcScalar;
+  type?: RpcScalar | 'map';
   optional?: boolean;
   repeated?: boolean;
-  map?: RpcScalar[];
+  map?: any[];
   ref?: string;
 };
 

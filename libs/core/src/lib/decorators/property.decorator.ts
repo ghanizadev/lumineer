@@ -15,6 +15,11 @@ export type PropertyTypeOptions = {
   options?: boolean;
 };
 
+export type PropertyTypeMapOptions = {
+  key: Omit<RpcScalar, 'float' | 'double' | 'bytes'>;
+  value: RpcScalar | { new (...args: any[]): {} };
+};
+
 export type PropertyRefOptions = {
   blockScoped?: boolean;
 };
@@ -44,9 +49,9 @@ export function PropertyType(
 ): DecoratorFunction;
 
 export function PropertyType(
-  type: 'float',
+  type: 'float' | 'double' | 'int32' | 'int64',
   options?: PropertyTypeOptions,
-  transform?: TransformFunction<string>
+  transform?: TransformFunction<number>
 ): DecoratorFunction;
 
 export function PropertyType(
@@ -68,33 +73,71 @@ export function PropertyType(
 ): DecoratorFunction;
 
 export function PropertyType(
-  type: RpcScalar,
-  options?: PropertyTypeOptions,
+  type: 'map',
+  options: PropertyTypeOptions & PropertyTypeMapOptions,
+  transform?: TransformFunction
+): DecoratorFunction;
+
+export function PropertyType(
+  type: RpcScalar | 'map',
+  options?: PropertyTypeOptions & PropertyTypeMapOptions,
   transform?: TransformFunction
 ): DecoratorFunction {
   return (target, propertyName) => {
-    let metadata: RpcMessageType = Reflect.getMetadata(
-      SERVICE_MESSAGE_TOKEN,
-      target
-    );
-    let property: RpcProperty = { type, propertyName };
-
-    if (options) {
-      property = _.merge(property, options);
-    }
-
-    if (transform) {
-      property = transform(property, options);
-    }
-
-    metadata = _.merge(metadata, {
-      properties: {
-        [propertyName]: property,
-      },
-    });
-
-    Reflect.defineMetadata(SERVICE_MESSAGE_TOKEN, metadata, target);
+    return propertyTypeImpl(target, propertyName, type, options, transform);
   };
+}
+
+function propertyTypeImpl(
+  target: any,
+  propertyName: string,
+  type: RpcScalar | 'map',
+  options?: PropertyTypeOptions & Partial<PropertyTypeMapOptions>,
+  transform?: TransformFunction
+) {
+  let metadata: RpcMessageType = Reflect.getMetadata(
+    SERVICE_MESSAGE_TOKEN,
+    target
+  );
+  let property: RpcProperty = { type, propertyName };
+
+  if (options) {
+    property = _.merge(property, options);
+  }
+
+  if (transform) {
+    property = transform(property, options);
+  }
+
+  if (type === 'map') {
+    property.map = [options.key, options.value];
+
+    if (typeof options.value !== 'string') {
+      const typeInstance = new options.value();
+      let propertiesMetadata = Reflect.getMetadata(
+        SERVICE_MESSAGE_TOKEN,
+        typeInstance
+      );
+      let messageMetadata = Reflect.getMetadata(
+        SERVICE_MESSAGE_TOKEN,
+        options.value
+      );
+      let message = _.merge(messageMetadata, propertiesMetadata);
+      let messages = Reflect.getMetadata('service:messages', target) ?? [];
+
+      messages.push(message);
+
+      Reflect.defineMetadata('service:messages', messages, target);
+    }
+  }
+
+  metadata = _.merge(metadata, {
+    properties: {
+      [propertyName]: property,
+    },
+  });
+
+  Reflect.defineMetadata(SERVICE_MESSAGE_TOKEN, metadata, target);
 }
 
 export const MessageRef = (

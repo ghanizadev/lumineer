@@ -2,7 +2,9 @@
   "name": "@cymbaline/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "dev": "npx nx run example:serve --configuration development"
+  },
   "private": true,
   "dependencies": {
     "@grpc/grpc-js": "^1.11.1",
