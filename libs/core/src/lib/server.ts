@@ -38,6 +38,7 @@ export type GRPCServerOptions = {
       file?: string;
     };
     logger?: boolean;
+    packageName?: string;
     credentials: gRPC.ServerCredentials;
   };
 };
@@ -47,8 +48,8 @@ const DEFAULT_OPTIONS: Partial<GRPCServerOptions> = {
   config: {
     proto: {
       path: path.resolve(process.cwd(), '.cymbaline'),
-      file: 'app.proto',
     },
+    packageName: 'app',
     credentials: gRPC.ServerCredentials.createInsecure(),
   },
 };
@@ -80,16 +81,13 @@ export class GRPCServer {
 
     this.protoGenerator = new ProtoGenerator(
       this.options.config?.proto?.path!,
-      this.options.config?.proto?.file!
+      this.options.config?.proto?.file ??
+        this.options.config.packageName + '.proto'
     );
   }
 
   private async config() {
-    await this.runHooks('onInit', {
-      server: this.server,
-      packageDefinition: this.packageDefinition,
-      dependencyContainer: this.dependencyContainer,
-    });
+    await this.runHooks('onInit');
 
     for (const provider of this.options.providers) {
       const dependencyProvider: any = {};
@@ -147,11 +145,7 @@ export class GRPCServer {
   public close() {
     this.server.unbind('127.0.0.1:' + this.port);
     this.server.forceShutdown();
-    this.runHooks('onShutdown', {
-      server: this.server,
-      packageDefinition: this.packageDefinition,
-      dependencyContainer: this.dependencyContainer,
-    }).catch();
+    this.runHooks('onShutdown').catch();
   }
 
   public use(middleware: GRPCFunctionMiddleware | GRPCClassMiddlewareType) {
@@ -171,10 +165,21 @@ export class GRPCServer {
     this.logger.info(`Plugin "${instance.constructor.name}" added.`);
   }
 
-  private async runHooks(stage: HookStage, context: HookContext) {
+  private async runHooks(
+    stage: HookStage,
+    context?: Omit<
+      HookContext,
+      'server' | 'dependencyContainer' | 'packageDefinition'
+    >
+  ) {
     await Promise.allSettled(
       this.plugins.map((pluginInstance) =>
-        pluginInstance[stage].call(pluginInstance, context)
+        pluginInstance[stage].call(pluginInstance, {
+          ...context,
+          server: this.server,
+          dependencyContainer: this.dependencyContainer,
+          packageDefinition: this.packageDefinition,
+        })
       )
     ).catch((e) => console.error(e));
   }
@@ -184,9 +189,6 @@ export class GRPCServer {
       const start = performance.now();
 
       await this.runHooks('preConfig', {
-        server: this.server,
-        packageDefinition: this.packageDefinition,
-        dependencyContainer: this.dependencyContainer,
         request: {
           targetClass: service,
         },
@@ -236,9 +238,6 @@ export class GRPCServer {
         const rpc = rpcMap[key];
 
         await this.runHooks('preBind', {
-          server: this.server,
-          packageDefinition: this.packageDefinition,
-          dependencyContainer: this.dependencyContainer,
           request: {
             targetHandlerName: rpc.rpcName,
             targetObject: data.instance,
@@ -262,9 +261,6 @@ export class GRPCServer {
         ) => {
           try {
             await this.runHooks('preCall', {
-              server: this.server,
-              packageDefinition: this.packageDefinition,
-              dependencyContainer: this.dependencyContainer,
               request: {
                 targetHandlerName: rpc.rpcName,
                 targetObject: data.instance,
@@ -279,9 +275,6 @@ export class GRPCServer {
             await handlerInstance.invoke(call, callback);
 
             await this.runHooks('postCall', {
-              server: this.server,
-              packageDefinition: this.packageDefinition,
-              dependencyContainer: this.dependencyContainer,
               request: {
                 targetHandlerName: rpc.rpcName,
                 targetObject: data.instance,
@@ -320,7 +313,6 @@ export class GRPCServer {
     middleware: any
   ): (context: MiddlewareContext) => Promise<void> | void {
     if (middleware.prototype && middleware.constructor.name) {
-      // const instance = container.resolve<GRPCClassMiddleware>(middleware);
       const instance = new middleware();
       return instance.handle.bind(instance);
     }
