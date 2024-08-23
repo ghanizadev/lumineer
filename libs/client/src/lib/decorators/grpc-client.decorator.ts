@@ -10,16 +10,16 @@ const defaultOptions: GrpcClientOptions = {
   useReflection: true,
 };
 
-export const GrpcClient = (url: string, options?: GrpcClientOptions) => {
+export const GrpcClient = (clientId: string, options?: GrpcClientOptions) => {
   return (target: any, propertyKey: string, parameterIndex: number) => {
     const opts = _.defaultsDeep(defaultOptions, options);
 
     Reflect.defineMetadata(
-      'grpc-client:' + nanoid(),
-      { parameterIndex, url, propertyKey, ...opts },
+      'grpc-client:' + clientId,
+      { parameterIndex, propertyKey, ...opts },
       target
     );
 
-    inject('GRPC_CLIENT')(target, propertyKey, parameterIndex);
+    inject('grpc-client:' + clientId)(target, propertyKey, parameterIndex);
   };
 };

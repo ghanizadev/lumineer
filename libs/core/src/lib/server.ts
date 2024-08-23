@@ -6,6 +6,7 @@ import { container, DependencyContainer } from 'tsyringe';
 import { Logger, Logger as BaseLogger } from '@cymbaline/logger';
 import { ProtoGenerator } from './proto';
 import {
+  GRPCClassMiddleware,
   GRPCClassMiddlewareType,
   GRPCFunctionMiddleware,
   GrpcPlugin,
@@ -105,8 +106,11 @@ export class GRPCServer {
 
     await this.parseServices(this.options.services);
 
+    const start = performance.now();
     const protoFile = this.protoGenerator.makeProtoFile(this.services);
     this.protoGenerator.writeProtoFile(protoFile);
+    const elapsed = (performance.now() - start).toFixed(2);
+    this.logger.info(`File protobuf spec generated in ${elapsed}ms`);
 
     this.packageDefinition = protoLoader.loadSync(
       this.protoGenerator.protoFilePath,
@@ -313,7 +317,7 @@ export class GRPCServer {
     middleware: any
   ): (context: MiddlewareContext) => Promise<void> | void {
     if (middleware.prototype && middleware.constructor.name) {
-      const instance = new middleware();
+      const instance = container.resolve<GRPCClassMiddleware>(middleware);
       return instance.handle.bind(instance);
     }
     return middleware;

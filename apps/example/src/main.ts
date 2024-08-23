@@ -28,9 +28,10 @@ const main = async () => {
 
   server.registerPlugin(ServerReflectionPlugin);
   server.registerPlugin(
-    GrpcClientPlugin.configure({
+    new GrpcClientPlugin({
       clients: {
-        '127.0.0.1:50052': {
+        'post-service': {
+          url: '127.0.0.1:50052',
           credentials: ChannelCredentials.createInsecure(),
         },
       },

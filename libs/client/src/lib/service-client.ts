@@ -1,15 +1,18 @@
-import { credentials } from '@grpc/grpc-js';
 import * as gRPC from '@grpc/grpc-js';
 
 export class GrpcServiceClient {
-  constructor(private readonly config: any) {}
+  constructor(
+    private readonly clientId: string,
+    private readonly url: string,
+    private readonly config: any
+  ) {}
 
   private async handleUnaryRequest(
     fn: (...args: any[]) => void,
-    request: any
+    request?: any
   ): Promise<any> {
     return new Promise((resolve) => {
-      fn(request, (error, response) => {
+      fn(request ?? {}, (error, response) => {
         resolve(response);
       });
     });
@@ -39,7 +42,7 @@ export class GrpcServiceClient {
   public async invoke<T = any>(
     servicePath: string,
     functionName: string,
-    request: any
+    request?: any
   ): Promise<T> {
     const evaluate = new Function('pkg', `return pkg.${servicePath}`);
     let Service = evaluate(this.config.pkg);
@@ -47,14 +50,14 @@ export class GrpcServiceClient {
     if (!Service) throw new Error('Service does not exist');
 
     let credentials: gRPC.ChannelCredentials;
-    if (this.config.clients[this.config.url].credentials) {
+    if (this.config.clients[this.clientId].credentials) {
       //TODO: Log a warn about missing credentials
-      credentials = this.config.clients[this.config.url].credentials;
+      credentials = this.config.clients[this.clientId].credentials;
     } else {
       credentials = gRPC.credentials.createInsecure();
     }
 
-    const service = new Service(this.config.url, credentials);
+    const service = new Service(this.url, credentials);
     const functionInstance = service[functionName];
     if (!functionInstance) throw new Error('Function does not exist');
 

@@ -5,27 +5,28 @@ import { GrpcServiceClient } from './service-client';
 import { Discover } from './discover';
 
 type GrpcClientPluginOptions = {
-  clients?: {
-    [clientUrl: string]: {
+  clients: {
+    [clientId: string]: {
       /*
-       * Credentials to be used with this client. If undefined, insecure credentials will be used instead
+       * Credentials to be used with this client. If `undefined`, insecure credentials will be used instead
        */
       credentials?: gRPC.ChannelCredentials;
+      /*
+       * The client connection string
+       */
+      url: string;
     };
   };
 };
 
 export class GrpcClientPlugin extends GrpcPlugin {
   private readonly serviceMap: Record<string, any> = {};
-  private options: GrpcClientPluginOptions = {};
 
   /*
    * Create a new instance with options;
    */
-  static configure(options: GrpcClientPluginOptions): GrpcPlugin {
-    const instance = new GrpcClientPlugin();
-    instance.options = options;
-    return instance;
+  constructor(private readonly options: GrpcClientPluginOptions) {
+    super();
   }
 
   async preConfig(context: HookContext): Promise<void> {
@@ -35,41 +36,43 @@ export class GrpcClientPlugin extends GrpcPlugin {
 
     for (const key of keys) {
       if (key.startsWith('grpc-client:') && !this.serviceMap[key]) {
-        const metadata = Reflect.getMetadata(key, targetClass);
-        let credentials: gRPC.ChannelCredentials;
-
-        if (this.options.clients[metadata.url].credentials) {
-          //TODO: Log a warn about missing credentials
-          credentials = this.options.clients[metadata.url].credentials;
-        } else {
-          credentials = gRPC.credentials.createInsecure();
-        }
-
-        const discovery = new Discover(metadata.url, credentials);
-        await discovery.introspect();
-
-        const pkgDefinition = protoLoader.loadSync(
-          discovery.protoFilePath + '.proto',
-          {
-            keepCase: true,
-            longs: String,
-            enums: String,
-            defaults: true,
-            oneofs: true,
-          }
-        );
-
-        const pkg = gRPC.loadPackageDefinition(pkgDefinition);
         this.serviceMap[key] = true;
-
-        context.dependencyContainer.register('GRPC_CLIENT', {
-          useValue: new GrpcServiceClient({
-            pkg,
-            ...metadata,
-            clients: this.options.clients,
-          }),
-        });
       }
+    }
+
+    for (const clientId in this.options.clients) {
+      const clientConfig = this.options.clients[clientId];
+
+      let credentials: gRPC.ChannelCredentials;
+
+      if (clientConfig.credentials) {
+        //TODO: Log a warn about missing credentials
+        credentials = clientConfig.credentials;
+      } else {
+        credentials = gRPC.credentials.createInsecure();
+      }
+
+      const discovery = new Discover(clientConfig.url, credentials);
+      await discovery.introspect();
+
+      const pkgDefinition = protoLoader.loadSync(
+        discovery.protoFilePath + '.proto',
+        {
+          keepCase: true,
+          longs: String,
+          enums: String,
+          defaults: true,
+          oneofs: true,
+        }
+      );
+
+      const pkg = gRPC.loadPackageDefinition(pkgDefinition);
+      context.dependencyContainer.register('grpc-client:' + clientId, {
+        useValue: new GrpcServiceClient(clientId, clientConfig.url, {
+          pkg,
+          clients: this.options.clients,
+        }),
+      });
     }
   }
 }

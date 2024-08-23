@@ -33,7 +33,7 @@ export class ReturnMessageType {
   status: string;
 
   @PropertyType('map', { key: 'string', value: MappedMessageType })
-  message: { [key: string]: string };
+  message: { [key: string]: MappedMessageType };
 }
 
 @Message()
