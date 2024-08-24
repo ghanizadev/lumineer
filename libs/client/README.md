@@ -1,4 +1,6 @@
-# client
+# @cymbaline/client
+
+## *gRPC Service client plugin for Cymbaline*
 
 This library was generated with [Nx](https://nx.dev).
 

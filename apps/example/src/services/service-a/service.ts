@@ -39,17 +39,6 @@ export class ServiceModule {
     @BodyParam() body: InputMessageType,
     @StreamParam() stream: Writable
   ) {
-    // const data = await this.postUserClient.unaryRequest('GetUser', { id: 1 });
-
-    // const iterator = this.postUserClient.serverStream('GetUserStream', {
-    //   id: 1,
-    // });
-    //
-    // for await (const data of iterator) {
-    //   console.log({ data });
-    //   if (data.done) break;
-    // }
-
     const duplexStream = this.postUserClient.duplexStream(
       'GetUserDuplexStream'
     );
@@ -64,11 +53,6 @@ export class ServiceModule {
     }
 
     duplexStream.end();
-
-    // response.push(null);
-    // data.on('data', (chunk) => {
-    //   console.log(chunk);
-    // });
 
     for (let i = 0; i < 3; i++) {
       await new Promise((res) => setTimeout(res, 1000));
@@ -91,7 +75,7 @@ export class ServiceModule {
   }
 
   @RPC()
-  @ReturnType(PingResponse)
+  @ReturnType(ReturnMessageType)
   @ArgumentType(PingRequest, { stream: true })
   private async pingPong(
     @BodyParam() body: PingRequest,

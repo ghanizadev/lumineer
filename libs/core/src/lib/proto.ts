@@ -6,6 +6,7 @@ import {
   RpcProperty,
   RpcMessageType,
 } from './types/message.types';
+import * as _ from 'lodash';
 
 const IND = '  ';
 
@@ -43,6 +44,7 @@ export class ProtoGenerator {
 
       this.proto.push('}', '');
 
+      const processedMessages: RpcMessageType[] = [];
       const messageTypes: RpcMessageType[] = Reflect.getMetadata(
         'service:messages',
         instance
@@ -68,6 +70,10 @@ export class ProtoGenerator {
       }
 
       for (const messageType of messageTypes) {
+        if (processedMessages.find((msg) => _.isEqual(msg, messageType)))
+          continue;
+
+        processedMessages.push(messageType);
         this.processMessageType(messageType);
       }
     }
