@@ -1,74 +1,118 @@
 import * as gRPC from '@grpc/grpc-js';
+import { Duplex, Readable, Writable } from 'node:stream';
+
+type ServiceClientConfig = {
+  clientId: string;
+  url: string;
+  serviceName: string;
+  packageName: string;
+  credentials?: gRPC.ChannelCredentials;
+};
+
+export type ServiceClientHandler = (...args: any[]) => any | Promise<any>;
+
+export type ServiceClientImpl = {
+  [key: string]: ServiceClientHandler;
+};
 
 export class GrpcServiceClient {
+  private readonly serviceImpl: ServiceClientImpl;
+
   constructor(
-    private readonly clientId: string,
-    private readonly url: string,
-    private readonly config: any
-  ) {}
-
-  private async handleUnaryRequest(
-    fn: (...args: any[]) => void,
-    request?: any
-  ): Promise<any> {
-    return new Promise((resolve) => {
-      fn(request ?? {}, (error, response) => {
-        resolve(response);
-      });
-    });
-  }
-
-  private async handleClientStreaming(
-    fn: (...args: any[]) => void,
-    request: any
-  ): Promise<any> {
-    throw new Error('Not implemented');
-  }
-
-  private async handleServerStreaming(
-    fn: (...args: any[]) => void,
-    request: any
-  ): Promise<any> {
-    throw new Error('Not implemented');
-  }
-
-  private async handleDuplexStreaming(
-    fn: (...args: any[]) => void,
-    request: any
-  ): Promise<any> {
-    throw new Error('Not implemented');
-  }
-
-  public async invoke<T = any>(
-    servicePath: string,
-    functionName: string,
-    request?: any
-  ): Promise<T> {
-    const evaluate = new Function('pkg', `return pkg.${servicePath}`);
-    let Service = evaluate(this.config.pkg);
+    private readonly serviceConfig: ServiceClientConfig,
+    private readonly pkg: any
+  ) {
+    let Service =
+      this.pkg[this.serviceConfig.packageName][this.serviceConfig.serviceName];
 
     if (!Service) throw new Error('Service does not exist');
 
     let credentials: gRPC.ChannelCredentials;
-    if (this.config.clients[this.clientId].credentials) {
+    if (this.serviceConfig.credentials) {
       //TODO: Log a warn about missing credentials
-      credentials = this.config.clients[this.clientId].credentials;
+      credentials = this.serviceConfig.credentials;
     } else {
       credentials = gRPC.credentials.createInsecure();
     }
 
-    const service = new Service(this.url, credentials);
-    const functionInstance = service[functionName];
-    if (!functionInstance) throw new Error('Function does not exist');
+    this.serviceImpl = new Service(this.serviceConfig.url, credentials);
+  }
 
-    const { requestStream, responseStream } = service[functionName];
-    const fn = service[functionName].bind(service);
+  private getHandler(handler: ServiceClientHandler | string) {
+    let fn: ServiceClientHandler;
 
-    if (!requestStream)
-      if (!responseStream) return this.handleUnaryRequest(fn, request);
-      else return this.handleClientStreaming(fn, request);
+    if (typeof handler === 'string')
+      fn = this.serviceImpl[handler] as ServiceClientHandler;
+    else fn = handler;
 
-    if (responseStream) return this.handleServerStreaming(fn, request);
-    return this.handleDuplexStreaming(fn, request);
+    if (!fn) throw new Error('Service handler not found');
+    return fn.bind(this.serviceImpl);
+  }
+
+  public async unaryRequest<T = any, U = any>(
+    handler: ServiceClientHandler | string,
+    request?: T
+  ): Promise<U> {
+    const fn = this.getHandler(handler);
+
+    return new Promise((resolve, reject) => {
+      fn(request ?? {}, (error, response) => {
+        if (error) reject(error);
+        else resolve(response);
+      });
+    });
+  }
+
+  public clientStream(handler: ServiceClientHandler | string): {
+    callStream: Writable;
+    responseStream: Readable;
+    response: Promise<any>;
+  } {
+    const fn = this.getHandler(handler);
+    const responseStream = new Readable({
+      read(size: number) {
+        return true;
+      },
+      objectMode: true,
+    });
+    const callStream: Writable = fn((error, data) => {
+      if (error) throw new Error(error);
+      responseStream.push(data);
+      responseStream.push(null);
+    });
+
+    const response = new Promise((resolve, reject) =>
+      responseStream.on('data', (chunk) => {
+        resolve(chunk);
+      })
+    );
+
+    return { callStream, responseStream, response };
+  }
+
+  public async *serverStream<T = any, U = any>(
+    handler: ServiceClientHandler | string,
+    request?: T
+  ): AsyncGenerator<{ done?: boolean; data: U }> {
+    const fn = this.getHandler(handler);
+    const stream: Readable = fn(request);
+
+    for await (const chunk of stream) {
+      yield { data: chunk };
+    }
+  }
+
+  public duplexStream(
+    handler: ServiceClientHandler | string,
+    request?: any
+  ): Duplex {
+    const fn = this.getHandler(handler);
+    const stream: Duplex = fn();
+    if (request) stream.write(request);
+    return stream;
+  }
+
+  get service() {
+    return this.serviceImpl;
   }
 }

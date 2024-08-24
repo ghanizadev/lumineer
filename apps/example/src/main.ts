@@ -29,6 +29,7 @@ const main = async () => {
   server.registerPlugin(ServerReflectionPlugin);
   server.registerPlugin(
     new GrpcClientPlugin({
+      introspectMode: true,
       clients: {
         'post-service': {
           url: '127.0.0.1:50052',

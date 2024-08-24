@@ -7,22 +7,34 @@ import {
   IFieldDescriptorProto,
 } from 'protobufjs/ext/descriptor';
 import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { LabelMap, TypeMap } from '../constants';
 
 export class FileDescriptorProtoParser {
   private readonly fileDescriptor: IFileDescriptorProto;
+  private readonly protoPackageName: string;
 
   private protoText = '';
 
   constructor(fileBuffer: Buffer) {
     this.fileDescriptor = FileDescriptorProto.decode(fileBuffer).toJSON();
+    this.protoPackageName = this.fileDescriptor.package;
   }
 
-  public saveToFile(path: string) {
+  public saveToFile(savePath: string) {
     this.toText();
-    fs.writeFileSync(path + '.proto', this.protoText);
+    const protoFilePath = savePath + '.proto';
+    const jsonFilePath = savePath + '.json';
+
+    const fileDir = path.dirname(protoFilePath);
+
+    if (!fs.existsSync(fileDir)) {
+      fs.mkdirSync(fileDir, { recursive: true });
+    }
+
+    fs.writeFileSync(protoFilePath, this.protoText);
     fs.writeFileSync(
-      path + '.json',
+      jsonFilePath,
       JSON.stringify(this.fileDescriptor, null, 2)
     );
   }
@@ -180,13 +192,17 @@ export class FileDescriptorProtoParser {
 
     serviceType.method.forEach((method) => {
       serviceText += `  rpc ${method.name} (${
-        method.serverStreaming ? 'stream ' : ''
-      }${method.inputType}) returns (${
         method.clientStreaming ? 'stream ' : ''
+      }${method.inputType}) returns (${
+        method.serverStreaming ? 'stream ' : ''
       }${method.outputType});\n`;
     });
 
     serviceText += '}\n\n';
     return serviceText;
+  }
+
+  get packageName() {
+    return this.protoPackageName;
   }
 }

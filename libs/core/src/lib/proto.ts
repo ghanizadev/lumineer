@@ -236,7 +236,7 @@ export class ProtoGenerator {
 
   public writeProtoFile(protoContents: string) {
     if (!fs.existsSync(this.protoPath)) {
-      fs.mkdirSync(this.protoPath);
+      fs.mkdirSync(this.protoPath, { recursive: true });
     }
 
     fs.writeFileSync(this.protoFilePath, protoContents);

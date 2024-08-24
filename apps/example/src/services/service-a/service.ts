@@ -28,7 +28,7 @@ export class ServiceModule {
 
   constructor(
     private readonly logger: Logger,
-    @GrpcClient('post-service')
+    @GrpcClient('post-service', 'UserService')
     private readonly postUserClient: GrpcServiceClient
   ) {}
 
@@ -39,12 +39,37 @@ export class ServiceModule {
     @BodyParam() body: InputMessageType,
     @StreamParam() stream: Writable
   ) {
-    const data = await this.postUserClient.invoke(
-      'app.UserService',
-      'GetUser',
-      { id: 0 }
+    // const data = await this.postUserClient.unaryRequest('GetUser', { id: 1 });
+
+    // const iterator = this.postUserClient.serverStream('GetUserStream', {
+    //   id: 1,
+    // });
+    //
+    // for await (const data of iterator) {
+    //   console.log({ data });
+    //   if (data.done) break;
+    // }
+
+    const duplexStream = this.postUserClient.duplexStream(
+      'GetUserDuplexStream'
     );
-    console.log({ data });
+
+    duplexStream.on('data', (chunk) => {
+      console.log({ chunk });
+    });
+
+    for (let i = 0; i < 5; i++) {
+      duplexStream.write({ id: i });
+      await new Promise((res) => setTimeout(res, 250));
+    }
+
+    duplexStream.end();
+
+    // response.push(null);
+    // data.on('data', (chunk) => {
+    //   console.log(chunk);
+    // });
+
     for (let i = 0; i < 3; i++) {
       await new Promise((res) => setTimeout(res, 1000));
       this.logger.info('Sending hello');

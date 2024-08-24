@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import * as fs from 'node:fs';
 import * as protoLoader from '@grpc/proto-loader';
 import * as gRPC from '@grpc/grpc-js';
+import * as childProcess from 'node:child_process';
 import { nanoid } from 'nanoid';
 
 import { FileDescriptorProtoParser } from './parser/file-descriptor-proto.parser';
@@ -12,6 +13,7 @@ export class Discover {
   private readonly protoPath: string;
   private readonly protoName: string;
 
+  private protoPackageName: string;
   private currentStream: Duplex | undefined;
 
   constructor(
@@ -51,30 +53,20 @@ export class Discover {
       this.currentStream.on('data', this.processIntrospectAnswer.bind(this));
       this.currentStream.on('end', () => {
         this.currentStream = undefined;
-        res(this.protoFilePath);
+        res(this.filePath);
       });
       this.currentStream.write({ list_services: '' });
     });
-  }
 
-  get protoFilePath() {
-    return path.join(this.protoPath, this.protoName);
+    await this.generateTypes();
   }
 
   private validateProtoPath() {
     if (!fs.existsSync(this.protoPath)) {
-      fs.mkdirSync(this.protoPath);
+      fs.mkdirSync(this.protoPath, { recursive: true });
     }
 
-    fs.readdir(this.protoPath, (err: any, files: any) => {
-      if (err) throw err;
-
-      for (const file of files) {
-        fs.unlink(path.join(this.protoPath, file), (err: any) => {
-          if (err) throw err;
-        });
-      }
-    });
+    fs.rmSync(this.protoPath, { recursive: true, force: true });
   }
 
   private processIntrospectAnswer(chunk: Record<string, any>) {
@@ -97,8 +89,9 @@ export class Discover {
       const parser = new FileDescriptorProtoParser(file);
 
       if (!filesProcessed.includes(parser.filename)) {
-        parser.saveToFile(this.protoFilePath);
+        parser.saveToFile(this.filePath);
         filesProcessed.push(parser.filename);
+        this.protoPackageName = parser.packageName;
       }
     }
 
@@ -109,5 +102,31 @@ export class Discover {
     for (const service of chunk.list_services_response.service) {
       this.currentStream.write({ file_containing_symbol: service.name });
     }
+  }
+
+  private async generateTypes() {
+    await new Promise((res, rej) => {
+      const child = childProcess.spawn(
+        `npx proto-loader-gen-types --longs=String --enums=String --defaults --oneofs --grpcLib=@grpc/grpc-js --outDir=.cymbaline/discovery/types .cymbaline/discovery/*.proto`,
+        { cwd: process.cwd(), env: process.env, shell: true }
+      );
+
+      child.on('error', (e) => {
+        console.error(e);
+        rej(e);
+      });
+
+      child.on('exit', () => {
+        res(null);
+      });
+    });
+  }
+
+  get filePath() {
+    return path.join(this.protoPath, this.protoName);
+  }
+
+  get packageName() {
+    return this.protoPackageName;
   }
 }
