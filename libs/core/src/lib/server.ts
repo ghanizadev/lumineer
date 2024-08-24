@@ -44,6 +44,15 @@ export type GRPCServerOptions = {
   };
 };
 
+export type ServiceConfig = {
+  name: string;
+  serviceClass: ClassConstructor;
+  instance: any;
+  middlewares?: {
+    [key: string]: (GRPCFunctionMiddleware | GRPCClassMiddlewareType)[];
+  };
+};
+
 const DEFAULT_OPTIONS: Partial<GRPCServerOptions> = {
   providers: [],
   config: {
@@ -56,7 +65,7 @@ const DEFAULT_OPTIONS: Partial<GRPCServerOptions> = {
 };
 
 export class GRPCServer {
-  private readonly services: Record<string, any> = {};
+  private readonly services: Record<string, ServiceConfig> = {};
   private readonly protoGenerator: ProtoGenerator;
   private readonly plugins: GrpcPlugin[] = [];
   private readonly dependencyContainer: DependencyContainer;
@@ -208,7 +217,7 @@ export class GRPCServer {
       const instance: any = this.dependencyContainer.resolve(service);
 
       const middlewares =
-        Reflect.getMetadata(SERVICE_MIDDLEWARE_TOKEN, service) ?? [];
+        Reflect.getMetadata(SERVICE_MIDDLEWARE_TOKEN, service) ?? {};
 
       this.services[metadata.name] = {
         instance,

@@ -7,6 +7,7 @@ import {
   RpcMessageType,
 } from './types/message.types';
 import * as _ from 'lodash';
+import { ServiceConfig } from './server';
 
 const IND = '  ';
 
@@ -19,7 +20,7 @@ export class ProtoGenerator {
     private readonly packageName = 'app'
   ) {}
 
-  public makeProtoFile(serviceInstances: Record<string, any>) {
+  public makeProtoFile(serviceInstances: Record<string, ServiceConfig>) {
     this.proto.push(
       'syntax = "proto3";',
       '',
@@ -57,7 +58,7 @@ export class ProtoGenerator {
           );
         }
 
-        for (const property of Object.values(message.properties)) {
+        for (const property of Object.values(message?.properties ?? {})) {
           if (property.type === 'map' && typeof property.map[1] !== 'string') {
             const typeMeta: RpcMessageType = Reflect.getMetadata(
               SERVICE_MESSAGE_TOKEN,
@@ -187,7 +188,7 @@ export class ProtoGenerator {
 
   private generateMessageType(messageType: RpcMessageType, ind = '') {
     let message = `${ind}message ${messageType.typeName} {\n`;
-    const propertyTypes = Object.values(messageType.properties);
+    const propertyTypes = Object.values(messageType?.properties ?? {});
     const refs = Object.values(messageType.refs ?? {}) ?? [];
 
     let cursor = 1;
