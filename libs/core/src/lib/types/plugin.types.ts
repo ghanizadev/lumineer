@@ -21,6 +21,7 @@ export abstract class GrpcPlugin {
   public async onInit(context: HookContext) {}
   public async preBind(context: HookContext) {}
   public async preConfig(context: HookContext) {}
+  public async postConfig(context: HookContext) {}
   public async preCall(context: HookContext) {}
   public async postCall(context: HookContext) {}
   public async onShutdown(context: HookContext) {}

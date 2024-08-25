@@ -10,14 +10,14 @@ import { FileDescriptorProtoParser } from './parser/file-descriptor-proto.parser
 
 export class Discover {
   private readonly pkg: any;
-  private readonly protoPath: string;
-  private readonly protoName: string;
+  private readonly discoveryDir: string;
 
   private protoPackageName: string;
   private currentStream: Duplex | undefined;
 
   constructor(
-    private readonly introspectUrl: string,
+    private readonly serviceUrl: string,
+    private readonly serviceName: string,
     private readonly credentials: gRPC.ChannelCredentials
   ) {
     const reflectionProtoPath = path.resolve(
@@ -36,24 +36,22 @@ export class Discover {
     });
 
     this.pkg = gRPC.loadPackageDefinition(pkgDefinition).grpc;
-    this.protoPath = path.resolve(process.cwd(), '.cymbaline', 'discovery');
-    this.protoName = 'discovery-' + nanoid();
-
-    this.validateProtoPath();
+    this.discoveryDir = path.resolve(process.cwd(), '.cymbaline', 'discovery');
   }
 
-  public async introspect() {
-    await new Promise((res) => {
+  public async run() {
+    await new Promise((resolve, reject) => {
       const serviceClient = new this.pkg.reflection.v1.ServerReflection(
-        this.introspectUrl,
+        this.serviceUrl,
         this.credentials
       );
 
       this.currentStream = serviceClient.ServerReflectionInfo();
-      this.currentStream.on('data', this.processIntrospectAnswer.bind(this));
+      this.currentStream.on('data', this.processAnswer.bind(this));
+      this.currentStream.on('error', reject);
       this.currentStream.on('end', () => {
         this.currentStream = undefined;
-        res(this.filePath);
+        resolve(this.filePath);
       });
       this.currentStream.write({ list_services: '' });
     });
@@ -62,14 +60,14 @@ export class Discover {
   }
 
   private validateProtoPath() {
-    if (!fs.existsSync(this.protoPath)) {
-      fs.mkdirSync(this.protoPath, { recursive: true });
+    if (!fs.existsSync(this.discoveryDir)) {
+      fs.mkdirSync(this.discoveryDir, { recursive: true });
     }
 
-    fs.rmSync(this.protoPath, { recursive: true, force: true });
+    fs.rmSync(this.discoveryDir, { recursive: true, force: true });
   }
 
-  private processIntrospectAnswer(chunk: Record<string, any>) {
+  private processAnswer(chunk: Record<string, any>) {
     switch (chunk.original_request.message_request) {
       case 'file_containing_symbol':
         this.processFileDescriptorProto(chunk);
@@ -85,13 +83,16 @@ export class Discover {
   private processFileDescriptorProto(chunk: Record<string, any>) {
     const filesProcessed: string[] = [];
 
+    this.validateProtoPath();
+
     for (const file of chunk.file_descriptor_response.file_descriptor_proto) {
       const parser = new FileDescriptorProtoParser(file);
 
       if (!filesProcessed.includes(parser.filename)) {
+        this.protoPackageName = parser.packageName;
+
         parser.saveToFile(this.filePath);
         filesProcessed.push(parser.filename);
-        this.protoPackageName = parser.packageName;
       }
     }
 
@@ -123,10 +124,27 @@ export class Discover {
   }
 
   get filePath() {
-    return path.join(this.protoPath, this.protoName);
+    return path.join(
+      this.discoveryDir,
+      this.serviceName,
+      this.packageName + '.proto'
+    );
   }
 
   get packageName() {
     return this.protoPackageName;
+  }
+
+  get allProtoFiles() {
+    const dir = path.join(this.discoveryDir, this.serviceName);
+    const files: string[] = [];
+    const paths = fs.readdirSync(dir);
+
+    for (const filePath of paths) {
+      const p = path.join(dir, filePath);
+      if (filePath.endsWith('.proto')) files.push(p);
+    }
+
+    return files;
   }
 }

@@ -1,44 +1,55 @@
 import * as gRPC from '@grpc/grpc-js';
 import { Duplex, Readable, Writable } from 'node:stream';
-
-type ServiceClientConfig = {
-  clientId: string;
-  url: string;
-  serviceName: string;
-  packageName: string;
-  credentials?: gRPC.ChannelCredentials;
-};
-
-export type ServiceClientHandler = (...args: any[]) => any | Promise<any>;
-
-export type ServiceClientImpl = {
-  [key: string]: ServiceClientHandler;
-};
+import {
+  ServiceClientConfig,
+  ServiceClientHandler,
+  ServiceClientImpl,
+} from './types';
+import * as _ from 'lodash';
+import { InternalException } from '@cymbaline/core';
 
 export class GrpcServiceClient {
-  private readonly serviceImpl: ServiceClientImpl;
+  private serviceImpl: ServiceClientImpl | undefined;
+  private connected = false;
 
   constructor(
     private readonly serviceConfig: ServiceClientConfig,
     private readonly pkg: any
   ) {
-    let Service =
-      this.pkg[this.serviceConfig.packageName][this.serviceConfig.serviceName];
+    this.setup(this.serviceConfig.failOnLoad);
+  }
 
-    if (!Service) throw new Error('Service does not exist');
+  private setup(shouldThrowError = true) {
+    try {
+      let Service = _.get(
+        this.pkg,
+        `${this.serviceConfig.packageName}.${this.serviceConfig.serviceName}`
+      );
 
-    let credentials: gRPC.ChannelCredentials;
-    if (this.serviceConfig.credentials) {
-      //TODO: Log a warn about missing credentials
-      credentials = this.serviceConfig.credentials;
-    } else {
-      credentials = gRPC.credentials.createInsecure();
+      if (!Service) throw new Error('Service does not exist');
+
+      let credentials: gRPC.ChannelCredentials;
+      if (this.serviceConfig.credentials) {
+        //TODO: Log a warn about missing credentials
+        credentials = this.serviceConfig.credentials;
+      } else {
+        credentials = gRPC.credentials.createInsecure();
+      }
+
+      this.serviceImpl = new Service(this.serviceConfig.url, credentials);
+      this.connected = true;
+      return true;
+    } catch (e) {
+      if (shouldThrowError) throw e;
+      return false;
     }
-
-    this.serviceImpl = new Service(this.serviceConfig.url, credentials);
   }
 
   private getHandler(handler: ServiceClientHandler | string) {
+    if (!this.connected) {
+      throw new InternalException('This service is offline');
+    }
+
     let fn: ServiceClientHandler;
 
     if (typeof handler === 'string')
@@ -113,6 +124,10 @@ export class GrpcServiceClient {
   }
 
   get service() {
+    if (!this.connected) {
+      if (!this.setup())
+        throw new InternalException('Service appears to be offline');
+    }
     return this.serviceImpl;
   }
 }

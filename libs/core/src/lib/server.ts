@@ -6,14 +6,18 @@ import { container, DependencyContainer } from 'tsyringe';
 import { Logger, Logger as BaseLogger } from '@cymbaline/logger';
 import { ProtoGenerator } from './proto';
 import {
+  ClassConstructor,
   GRPCClassMiddleware,
   GRPCClassMiddlewareType,
   GRPCFunctionMiddleware,
   GrpcPlugin,
+  GRPCServerOptions,
   HookContext,
   HookStage,
   MiddlewareContext,
   MiddlewareHandler,
+  ServiceConfig,
+  RpcMetadata,
 } from './types';
 import {
   SERVICE_MIDDLEWARE_TOKEN,
@@ -22,41 +26,12 @@ import {
 } from './constants';
 import { Handler } from './handler';
 import { ExceptionHandler } from './exception-handler';
-import { RpcMetadata } from './types/message.types';
-
-type ClassConstructor<T = {}> = { new (...args: any[]): T };
-
-export type GRPCServerOptions = {
-  services: ClassConstructor[];
-  providers?: {
-    provide: ClassConstructor;
-    useValue?: any;
-    useClass?: ClassConstructor;
-  }[];
-  config?: {
-    proto?: {
-      path?: string;
-      file?: string;
-    };
-    logger?: boolean;
-    packageName?: string;
-    credentials: gRPC.ServerCredentials;
-  };
-};
-
-export type ServiceConfig = {
-  name: string;
-  serviceClass: ClassConstructor;
-  instance: any;
-  middlewares?: {
-    [key: string]: (GRPCFunctionMiddleware | GRPCClassMiddlewareType)[];
-  };
-};
 
 const DEFAULT_OPTIONS: Partial<GRPCServerOptions> = {
   providers: [],
   config: {
     proto: {
+      generate: true,
       path: path.resolve(process.cwd(), '.cymbaline'),
     },
     packageName: 'app',
@@ -91,8 +66,7 @@ export class GRPCServer {
 
     this.protoGenerator = new ProtoGenerator(
       this.options.config?.proto?.path!,
-      this.options.config?.proto?.file ??
-        this.options.config.packageName + '.proto'
+      this.options.config?.proto?.file ?? this.options.config.packageName
     );
   }
 
@@ -115,11 +89,13 @@ export class GRPCServer {
 
     await this.parseServices(this.options.services);
 
-    const start = performance.now();
-    const protoFile = this.protoGenerator.makeProtoFile(this.services);
-    this.protoGenerator.writeProtoFile(protoFile);
-    const elapsed = (performance.now() - start).toFixed(2);
-    this.logger.info(`File protobuf spec generated in ${elapsed}ms`);
+    if (this.options.config.proto.generate) {
+      const start = performance.now();
+      const protoFile = this.protoGenerator.makeProtoFile(this.services);
+      this.protoGenerator.writeProtoFile(protoFile);
+      const elapsed = (performance.now() - start).toFixed(2);
+      this.logger.info(`File protobuf spec generated in ${elapsed}ms`);
+    }
 
     this.packageDefinition = protoLoader.loadSync(
       this.protoGenerator.protoFilePath,
@@ -132,7 +108,10 @@ export class GRPCServer {
       }
     );
     this.grpcObject = gRPC.loadPackageDefinition(this.packageDefinition);
-    this.package = this.grpcObject.app as gRPC.GrpcObject;
+    this.package = _.get(
+      this.grpcObject,
+      this.options.config.packageName
+    ) as gRPC.GrpcObject;
   }
 
   public async run(port: string | number) {
@@ -185,7 +164,7 @@ export class GRPCServer {
       'server' | 'dependencyContainer' | 'packageDefinition'
     >
   ) {
-    await Promise.allSettled(
+    await Promise.all(
       this.plugins.map((pluginInstance) =>
         pluginInstance[stage].call(pluginInstance, {
           ...context,
@@ -194,7 +173,7 @@ export class GRPCServer {
           packageDefinition: this.packageDefinition,
         })
       )
-    ).catch((e) => console.error(e));
+    );
   }
 
   private async parseServices(services: ClassConstructor[]) {
@@ -304,6 +283,8 @@ export class GRPCServer {
 
       this.server.addService(serviceDef, serviceImplementations);
     }
+
+    await this.runHooks('postConfig');
   }
 
   private makeMiddlewareContext(call?: any, callback?: any): MiddlewareContext {
@@ -319,7 +300,7 @@ export class GRPCServer {
   }
 
   private updateOptions(options?: GRPCServerOptions) {
-    if (options) this.options = _.defaultsDeep(DEFAULT_OPTIONS, options);
+    if (options) this.options = _.defaultsDeep(options, DEFAULT_OPTIONS);
   }
 
   private processMiddleware(

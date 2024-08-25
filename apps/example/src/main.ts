@@ -23,13 +23,18 @@ const main = async () => {
     config: {
       logger: true,
       credentials: ServerCredentials.createInsecure(),
+      proto: {
+        // generate: process.env.NODE_ENV !== 'production',
+      },
+      packageName: 'some.service',
     },
   });
 
   server.registerPlugin(ServerReflectionPlugin);
   server.registerPlugin(
     new GrpcClientPlugin({
-      introspectMode: true,
+      discovery: process.env.NODE_ENV !== 'production',
+      ignoreOfflineClients: true,
       clients: {
         'post-service': {
           url: '127.0.0.1:50052',

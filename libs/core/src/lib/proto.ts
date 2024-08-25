@@ -1,22 +1,26 @@
 import * as path from 'node:path';
 import * as fs from 'node:fs';
-import { SERVICE_RPC_TOKEN, SERVICE_MESSAGE_TOKEN } from './constants';
+import {
+  SERVICE_RPC_TOKEN,
+  SERVICE_MESSAGE_TOKEN,
+  EMPTY_MESSAGE,
+} from './constants';
 import {
   RpcMetadata,
   RpcProperty,
   RpcMessageType,
-} from './types/message.types';
+  ServiceConfig,
+} from './types';
 import * as _ from 'lodash';
-import { ServiceConfig } from './server';
 
 const IND = '  ';
 
 export class ProtoGenerator {
   private readonly proto: string[] = [];
+  private readonly customTypes: Set<string> = new Set();
 
   constructor(
     private readonly protoPath: string,
-    private readonly protoFile: string,
     private readonly packageName = 'app'
   ) {}
 
@@ -77,6 +81,10 @@ export class ProtoGenerator {
         processedMessages.push(messageType);
         this.processMessageType(messageType);
       }
+
+      for (const customType of this.customTypes) {
+        this.proto.push('', customType);
+      }
     }
 
     return this.proto.join('\n');
@@ -95,13 +103,23 @@ export class ProtoGenerator {
   }
 
   private generateRpc(rpcProperties: RpcMetadata, indentation = '') {
-    const {
+    let {
       rpcName,
       clientStream,
       serverStream,
       argumentTypeName,
       returnTypeName,
     } = rpcProperties;
+
+    if (!argumentTypeName) {
+      argumentTypeName = 'Empty';
+      this.customTypes.add(EMPTY_MESSAGE);
+    }
+
+    if (!returnTypeName) {
+      returnTypeName = 'Empty';
+      this.customTypes.add(EMPTY_MESSAGE);
+    }
 
     const lines = [
       `${indentation}${IND}rpc ${rpcName} (${clientStream ? 'stream ' : ''}`,
@@ -250,6 +268,6 @@ export class ProtoGenerator {
   }
 
   get protoFilePath() {
-    return path.join(this.protoPath, this.protoFile);
+    return path.join(this.protoPath, this.packageName + '.proto');
   }
 }

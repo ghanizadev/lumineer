@@ -21,22 +21,16 @@ export class FileDescriptorProtoParser {
     this.protoPackageName = this.fileDescriptor.package;
   }
 
-  public saveToFile(savePath: string) {
+  public saveToFile(filePath: string) {
     this.toText();
-    const protoFilePath = savePath + '.proto';
-    const jsonFilePath = savePath + '.json';
 
-    const fileDir = path.dirname(protoFilePath);
+    const fileDir = path.dirname(filePath);
 
     if (!fs.existsSync(fileDir)) {
       fs.mkdirSync(fileDir, { recursive: true });
     }
 
-    fs.writeFileSync(protoFilePath, this.protoText);
-    fs.writeFileSync(
-      jsonFilePath,
-      JSON.stringify(this.fileDescriptor, null, 2)
-    );
+    fs.writeFileSync(filePath, this.protoText);
   }
 
   get filename() {

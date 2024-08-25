@@ -39,20 +39,16 @@ export class ServiceModule {
     @BodyParam() body: InputMessageType,
     @StreamParam() stream: Writable
   ) {
-    const duplexStream = this.postUserClient.duplexStream(
-      'GetUserDuplexStream'
-    );
+    const response = await this.postUserClient
+      .unaryRequest('getUser', {
+        id: 0,
+      })
+      .catch((e) => {
+        console.log(e);
+        this.logger.warn('User not found');
+      });
 
-    duplexStream.on('data', (chunk) => {
-      console.log({ chunk });
-    });
-
-    for (let i = 0; i < 5; i++) {
-      duplexStream.write({ id: i });
-      await new Promise((res) => setTimeout(res, 250));
-    }
-
-    duplexStream.end();
+    this.logger.info({ response });
 
     for (let i = 0; i < 3; i++) {
       await new Promise((res) => setTimeout(res, 1000));

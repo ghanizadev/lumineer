@@ -3,29 +3,7 @@ import * as protoLoader from '@grpc/proto-loader';
 import * as gRPC from '@grpc/grpc-js';
 import { GrpcServiceClient } from './service-client';
 import { Discover } from './discover';
-
-type GrpcClientPluginOptions = {
-  /*
-   * When should the introspect run: `true` - every server start; `false` -
-   * Do not run; `if-not-present` - Run if the configuration is not present
-   * */
-  introspectMode?: boolean | 'if-not-present';
-  /*
-   * Client configuration with `clientId` as key
-   * */
-  clients: {
-    [clientId: string]: {
-      /*
-       * Credentials to be used with this client. If `undefined`, insecure credentials will be used instead
-       */
-      credentials?: gRPC.ChannelCredentials;
-      /*
-       * The client connection string
-       */
-      url: string;
-    };
-  };
-};
+import { GrpcClientPluginOptions } from './types';
 
 export class GrpcClientPlugin extends GrpcPlugin {
   /*
@@ -65,19 +43,22 @@ export class GrpcClientPlugin extends GrpcPlugin {
         credentials = gRPC.credentials.createInsecure();
       }
 
-      const discovery = new Discover(clientConfig.url, credentials);
-      await discovery.introspect();
-
-      const pkgDefinition = protoLoader.loadSync(
-        discovery.filePath + '.proto',
-        {
-          keepCase: true,
-          longs: String,
-          enums: String,
-          defaults: true,
-          oneofs: true,
+      const discovery = new Discover(clientConfig.url, clientId, credentials);
+      await discovery.run().catch((e) => {
+        if (!this.options.ignoreOfflineClients) {
+          throw e;
         }
-      );
+      });
+
+      const protoFiles = discovery.allProtoFiles;
+
+      const pkgDefinition = protoLoader.loadSync(protoFiles, {
+        keepCase: true,
+        longs: String,
+        enums: String,
+        defaults: true,
+        oneofs: true,
+      });
 
       const pkg = gRPC.loadPackageDefinition(pkgDefinition);
 
@@ -89,6 +70,7 @@ export class GrpcClientPlugin extends GrpcPlugin {
             url: clientConfig.url,
             credentials: clientConfig.credentials,
             packageName: discovery.packageName,
+            failOnLoad: !this.options.ignoreOfflineClients,
           },
           pkg
         ),
