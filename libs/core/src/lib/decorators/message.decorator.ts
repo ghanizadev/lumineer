@@ -1,5 +1,5 @@
 import { SERVICE_MESSAGE_TOKEN } from '../constants';
-import { RpcMessageType } from '../types/message.types';
+import { RpcMessageType } from '../types';
 import * as _ from 'lodash';
 
 export type TypeOptions = {

@@ -44,3 +44,7 @@ Thumbs.db
 /.cymbaline
 
 .npmrc
+
+# Generated Docusaurus files
+.docusaurus/
+.cache-loader/
