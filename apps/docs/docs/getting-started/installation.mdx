@@ -1,0 +1,86 @@
+---
+title: Installation
+---
+
+To get started, Cymbaline only requires the core package.
+
+Install using your favorite package manager:
+
+[NPM](https://www.npmjs.com/package/@cymbaline/core):
+
+```bash
+npm install --save @cymbaline/core
+```
+[Yarn](https://yarnpkg.com/package?name=@cymbaline/core):
+
+```bash
+yarn add @cymbaline/core
+```
+or [pnpm](https://pnpm.io/):
+
+```bash
+pnpm install @cymbaline/core
+```
+
+## Requirements
+
+- Node.js version 18.0 or higher.
+- Typescript
+
+## Recommended project structure
+
+This project is not really dependent to any structure, ypu are dell to use what suits better to your needs. However, we can help you with some ideas:
+
+```bash
+my-project
+├── .cymbaline
+├── src
+│   ├── services
+│   │   ├── first-service
+│   │   │   ├── service.ts
+│   │   │   ├── model.ts
+│   │   │   └── dto.ts
+│   │   └── second-service
+│   │       ├── service.ts
+│   │       ├── model.ts
+│   │       └── dto.ts
+│   └── main.ts
+├── package.json
+├── README.md
+├── tsconfig.json
+└── package-lock.json
+```
+
+Here we can have one service implementation (and dependencies) per folder.
+
+This is inspired in other libraries and frameworks, but anything prevents you to create your own.
+
+## Running the project
+
+To run the project int your machine, use the development server, it supports hot-reloading:
+
+``` bash
+npx cymbaline dev
+```
+
+After this you can access the service via `localhost:50051` using a rest client like [Postman](#) or [Insomnia](#).
+
+This should not be used in production! See [Going to production](/docs/deployment/going-to-production.md)
+
+## Building the project
+
+To build the project, simply run:
+
+``` bash
+npx cymbaline build
+```
+
+This will create a production version of your project by default. If you wish to use development, pass an optional `--dev` flag to this command.
+
+Although this could be deployed to production, a few measurements should be taken into consideration. Please refer to the [Deployment](/docs/deplyment) section before releasing your app.
+
+See more about the [Cymbaline CLI here](/docs/category/cli).
+
+## Issues
+
+Issues, bugs and suggestions can be sent via the [GitHub](#) repository.

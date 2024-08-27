@@ -8,9 +8,6 @@ Here we will cover the basics to create a new server with **Cymbaline**.
 
 ## Goals
 
-Get started by **creating a new site**.
-
-Or **try Docusaurus immediately** with **[docusaurus.new](https://docusaurus.new)**.
 
 ### Why Cymbaline?
 
