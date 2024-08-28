@@ -1,4 +1,4 @@
-import { Logger } from '@cymbaline/logger';
+import { Logger } from '@lumineer/logger';
 
 export type MiddlewareContext = {
   logger: Logger;

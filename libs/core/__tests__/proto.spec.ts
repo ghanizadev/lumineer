@@ -10,14 +10,14 @@ import {
   RPC,
   Service,
   ServiceConfig,
-} from '@cymbaline/core';
+} from '@lumineer/core';
 import { container } from 'tsyringe';
 
 describe('Proto generator', () => {
   let proto: ProtoGenerator;
 
   beforeEach(() => {
-    proto = new ProtoGenerator('.test', '.proto', 'com.example.cymbaline');
+    proto = new ProtoGenerator('.test', '.proto', 'com.example.lumineer');
   });
 
   it('Should create proto file', () => {
@@ -50,7 +50,7 @@ describe('Proto generator', () => {
     expect(file).toBeString();
 
     expect(file).toInclude('syntax = "proto3";');
-    expect(file).toInclude('package com.example.cymbaline;');
+    expect(file).toInclude('package com.example.lumineer;');
     expect(file).toInclude('service ServiceWithEmptyMessagesImpl');
     expect(file).toInclude('message EmptyArgumentImpl');
     expect(file).toInclude('message EmptyReturnImpl');

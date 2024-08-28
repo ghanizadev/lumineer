@@ -1,4 +1,4 @@
-# Cymbaline
+# Lumineer
 
 <p align="center">A code-first gRPC framework for building efficient services</p>
 
@@ -11,7 +11,7 @@
 Install the package using your favorite package manager:
 
 ```shell
-npm install --save @cymbaline/core
+npm install --save @lumineer/core
 ```
 
 ### Minimal setup
@@ -71,7 +71,7 @@ async function run() {
     config: {
       logger: true,
       credentials: ServerCredentials.createInsecure(),
-      packageName: 'com.ghanizadev.cymbaline',
+      packageName: 'com.ghanizadev.lumineer',
     },
   });
 

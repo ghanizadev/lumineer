@@ -4,7 +4,6 @@ import * as fs from 'node:fs';
 import * as protoLoader from '@grpc/proto-loader';
 import * as gRPC from '@grpc/grpc-js';
 import * as childProcess from 'node:child_process';
-import { nanoid } from 'nanoid';
 
 import { FileDescriptorProtoParser } from './parser/file-descriptor-proto.parser';
 
@@ -36,7 +35,7 @@ export class Discover {
     });
 
     this.pkg = gRPC.loadPackageDefinition(pkgDefinition).grpc;
-    this.discoveryDir = path.resolve(process.cwd(), '.cymbaline', 'discovery');
+    this.discoveryDir = path.resolve(process.cwd(), '.lumineer', 'discovery');
   }
 
   public async run() {
@@ -108,7 +107,7 @@ export class Discover {
   private async generateTypes() {
     await new Promise((res, rej) => {
       const child = childProcess.spawn(
-        `npx proto-loader-gen-types --longs=String --enums=String --defaults --oneofs --grpcLib=@grpc/grpc-js --outDir=.cymbaline/discovery/types .cymbaline/discovery/*.proto`,
+        `npx proto-loader-gen-types --longs=String --enums=String --defaults --oneofs --grpcLib=@grpc/grpc-js --outDir=.lumineer/discovery/types .lumineer/discovery/*.proto`,
         { cwd: process.cwd(), env: process.env, shell: true }
       );
 
@@ -137,6 +136,9 @@ export class Discover {
 
   get allProtoFiles() {
     const dir = path.join(this.discoveryDir, this.serviceName);
+
+    if (!fs.existsSync(dir)) return [];
+
     const files: string[] = [];
     const paths = fs.readdirSync(dir);
 

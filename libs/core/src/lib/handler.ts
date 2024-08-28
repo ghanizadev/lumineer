@@ -1,6 +1,6 @@
 import * as gRPC from '@grpc/grpc-js';
 import { SERVICE_RPC_ARGS_TOKEN } from './constants';
-import { Logger } from '@cymbaline/logger';
+import { Logger } from '@lumineer/logger';
 import { RpcMetadata } from './types/message.types';
 
 export type HandlerContext = {

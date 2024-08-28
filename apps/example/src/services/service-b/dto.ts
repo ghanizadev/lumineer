@@ -1,4 +1,4 @@
-import { Message, OneOf, PropertyType } from '@cymbaline/core';
+import { Message, OneOf, PropertyType } from '@lumineer/core';
 
 @Message()
 export class ServiceBInput {

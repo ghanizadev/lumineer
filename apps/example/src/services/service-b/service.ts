@@ -5,7 +5,7 @@ import {
   ReturnType,
   RPC,
   Service,
-} from '@cymbaline/core';
+} from '@lumineer/core';
 import { DataSource } from 'typeorm';
 import {
   GetUserInput,

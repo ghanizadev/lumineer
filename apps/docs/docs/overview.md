@@ -4,12 +4,12 @@ sidebar_position: 1
 
 # Overview
 
-Here we will cover the basics to create a new server with **Cymbaline**.
+Here we will cover the basics to create a new server with **Lumineer**.
 
 ## Goals
 
 
-### Why Cymbaline?
+### Why Lumineer?
 
 Short answer: discover.
 

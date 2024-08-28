@@ -1,2 +1,2 @@
-# @cymbaline/core
+# @lumineer/core
 

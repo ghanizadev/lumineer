@@ -1,6 +1,6 @@
-# @cymbaline/client
+# @lumineer/client
 
-## *gRPC Service client plugin for Cymbaline*
+## *gRPC Service client plugin for Lumineer*
 
 This library was generated with [Nx](https://nx.dev).
 

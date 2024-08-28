@@ -8,7 +8,7 @@ Messages are defined by the `@Message()` decorator imported from the core packag
 An example of a message is:
 
 ```typescript
-import { PropertyType, Message } from '@Cymbaline/core';
+import { PropertyType, Message } from '@Lumineer/core';
 
 @Message()
 class Article {

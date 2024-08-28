@@ -9,13 +9,13 @@ import create from './create';
 const program = new Command();
 
 program
-  .name('cymbaline')
+  .name('lumineer')
   .description('Utility CLI')
   .version('0.0.1')
   .option(
     '-c, --config',
     'Path to the configuration file',
-    'cymbaline.config.js'
+    'lumineer.config.js'
   );
 
 program.addCommand(build);

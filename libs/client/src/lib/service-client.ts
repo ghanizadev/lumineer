@@ -6,7 +6,7 @@ import {
   ServiceClientImpl,
 } from './types';
 import * as _ from 'lodash';
-import { InternalException } from '@cymbaline/core';
+import { InternalException } from '@lumineer/core';
 
 export class GrpcServiceClient {
   private serviceImpl: ServiceClientImpl | undefined;

@@ -38,7 +38,7 @@
       "options": {
         "targetName": "test"
       },
-      "exclude": ["apps/cymbaline-e2e/**/*", "apps/test-e2e/**/*"]
+      "exclude": ["apps/lumineer-e2e/**/*", "apps/test-e2e/**/*"]
     }
   ],
   "release": {

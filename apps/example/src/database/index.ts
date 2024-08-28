@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import * as path from 'node:path';
-import { Logger } from '@cymbaline/logger';
+import { Logger } from '@lumineer/logger';
 
 export class DatabaseConnection extends DataSource {
   private readonly customLogger: Logger;
@@ -8,7 +8,7 @@ export class DatabaseConnection extends DataSource {
   constructor() {
     super({
       type: 'mongodb',
-      database: 'cymbaline',
+      database: 'lumineer',
       host: 'localhost',
       port: 27017,
       synchronize: true,

@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import * as chokidar from 'chokidar';
 import * as cp from 'node:child_process';
 import * as process from 'node:process';
-import { Logger } from '@cymbaline/logger';
+import { Logger } from '@lumineer/logger';
 
 const CMD = 'npx ts-node ./src/main.ts';
 
@@ -29,7 +29,7 @@ async function dev(
 ) {
   logger.info('Starting server');
   const watcher = chokidar.watch(process.cwd(), {
-    ignored: ['**/node_modules/**', '**/.cymbaline/**/*'],
+    ignored: ['**/node_modules/**', '**/.lumineer/**/*'],
     ignoreInitial: true,
     ignorePermissionErrors: true,
   });

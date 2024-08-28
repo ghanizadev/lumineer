@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { Logger } from '@cymbaline/logger';
+import { Logger } from '@lumineer/logger';
 import * as cp from 'node:child_process';
 import * as process from 'node:process';
 
@@ -37,7 +37,7 @@ async function build(
 }
 
 const command = new Command('build')
-  .description('Build the Cymbaline application')
+  .description('Build the Lumineer application')
   .option('-D, --dev', 'Build the development version')
   .action(build);
 

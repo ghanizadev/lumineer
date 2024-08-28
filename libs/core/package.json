@@ -1,11 +1,11 @@
 {
-  "name": "@cymbaline/core",
+  "name": "@lumineer/core",
   "version": "0.0.1",
   "dependencies": {
     "lodash": "^4.17.21"
   },
   "peerDependencies": {
-    "@cymbaline/logger": "^0.0.1",
+    "@lumineer/logger": "^0.0.1",
     "@grpc/grpc-js": "^1.11.1",
     "@grpc/proto-loader": "^0.7.13",
     "reflect-metadata": "^0.2.2",

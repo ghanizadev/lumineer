@@ -15,11 +15,11 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@cymbaline/cli": ["libs/cli/src/index.ts"],
-      "@cymbaline/client": ["libs/client/src/index.ts"],
-      "@cymbaline/core": ["libs/core/src/index.ts"],
-      "@cymbaline/logger": ["libs/logger/src/index.ts"],
-      "@cymbaline/server-reflection": ["libs/server-reflection/src/index.ts"]
+      "@lumineer/cli": ["libs/cli/src/index.ts"],
+      "@lumineer/client": ["libs/client/src/index.ts"],
+      "@lumineer/core": ["libs/core/src/index.ts"],
+      "@lumineer/logger": ["libs/logger/src/index.ts"],
+      "@lumineer/server-reflection": ["libs/server-reflection/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

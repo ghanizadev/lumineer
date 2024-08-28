@@ -7,8 +7,8 @@ import {
   Service,
   StreamParam,
   UnknownException,
-} from '@cymbaline/core';
-import { Logger } from '@cymbaline/logger';
+} from '@lumineer/core';
+import { Logger } from '@lumineer/logger';
 import { Writable, Duplex } from 'stream';
 import {
   InputMessageType,
@@ -17,7 +17,7 @@ import {
   PingResponse,
   ReturnMessageType,
 } from './dto';
-import { GrpcClient, GrpcServiceClient } from '@cymbaline/client';
+import { GrpcClient, GrpcServiceClient } from '@lumineer/client';
 
 @Service()
 @Middleware(({ logger }) => {

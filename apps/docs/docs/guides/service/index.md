@@ -13,7 +13,7 @@ import {
   ArgumentType,
   ReturnType,
   BodyParam
-} from '@cymbaline/core';
+} from '@lumineer/core';
 
 @Message()
 class CreateUser {
@@ -61,7 +61,7 @@ This can be translated to a `protobuf` file like:
 ```protobuf
 syntax = "proto3";
 
-package com.ghanizadev.cymbaline;
+package com.ghanizadev.lumineer;
 
 service UserService {
   rpc CreateUser (CreateUser) returns (User) {};

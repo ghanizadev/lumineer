@@ -5,15 +5,15 @@ const { themes } = require('prism-react-renderer');
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'Cymbaline',
+  title: 'Lumineer',
   tagline: 'Dinosaurs are cool',
-  url: 'https://cymbaline.ghanizadev.com',
+  url: 'https://lumineer.ghanizadev.com',
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
   organizationName: 'ghanizadev', // Usually your GitHub org/user name.
-  projectName: 'Cymbaline', // Usually your repo name.
+  projectName: 'Lumineer', // Usually your repo name.
 
   presets: [
     [
@@ -42,9 +42,9 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       navbar: {
-        title: 'Cymbaline',
+        title: 'Lumineer',
         logo: {
-          alt: 'Cymbaline logo',
+          alt: 'Lumineer logo',
           src: 'img/logo.svg',
         },
         items: [

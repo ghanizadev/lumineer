@@ -7,7 +7,7 @@ A map `map<key, value>` are a way to create a sub-object inside a message withou
 
 Maps can have `string` or a non-floating-point number (`uint`, `int32`...) as key, and any other data types as value.
 
-In Cymbaline, maps can be generated as follows:
+In Lumineer, maps can be generated as follows:
 
 ```typescript
 import { PropertyType } from './property.decorator';

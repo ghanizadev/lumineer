@@ -2,24 +2,24 @@
 title: Installation
 ---
 
-To get started, Cymbaline only requires the core package.
+To get started, Lumineer only requires the core package.
 
 Install using your favorite package manager:
 
-[NPM](https://www.npmjs.com/package/@cymbaline/core):
+[NPM](https://www.npmjs.com/package/@lumineer/core):
 
 ```bash
-npm install --save @cymbaline/core
+npm install --save @lumineer/core
 ```
-[Yarn](https://yarnpkg.com/package?name=@cymbaline/core):
+[Yarn](https://yarnpkg.com/package?name=@lumineer/core):
 
 ```bash
-yarn add @cymbaline/core
+yarn add @lumineer/core
 ```
 or [pnpm](https://pnpm.io/):
 
 ```bash
-pnpm install @cymbaline/core
+pnpm install @lumineer/core
 ```
 
 ## Requirements
@@ -33,7 +33,7 @@ This project is not really dependent to any structure, ypu are dell to use what 
 
 ```bash
 my-project
-├── .cymbaline
+├── .lumineer
 ├── src
 │   ├── services
 │   │   ├── first-service
@@ -60,7 +60,7 @@ This is inspired in other libraries and frameworks, but anything prevents you to
 To run the project int your machine, use the development server, it supports hot-reloading:
 
 ``` bash
-npx cymbaline dev
+npx lumineer dev
 ```
 
 After this you can access the service via `localhost:50051` using a rest client like [Postman](#) or [Insomnia](#).
@@ -72,14 +72,14 @@ This should not be used in production! See [Going to production](/docs/deploymen
 To build the project, simply run:
 
 ``` bash
-npx cymbaline build
+npx lumineer build
 ```
 
 This will create a production version of your project by default. If you wish to use development, pass an optional `--dev` flag to this command.
 
 Although this could be deployed to production, a few measurements should be taken into consideration. Please refer to the [Deployment](/docs/deplyment) section before releasing your app.
 
-See more about the [Cymbaline CLI here](/docs/category/cli).
+See more about the [Lumineer CLI here](/docs/category/cli).
 
 ## Issues
 

@@ -3,7 +3,7 @@ import * as protoLoader from '@grpc/proto-loader';
 import * as path from 'node:path';
 import * as _ from 'lodash';
 import { container, DependencyContainer } from 'tsyringe';
-import { Logger, Logger as BaseLogger } from '@cymbaline/logger';
+import { Logger, Logger as BaseLogger } from '@lumineer/logger';
 import { ProtoGenerator } from './proto';
 import {
   ClassConstructor,
@@ -32,7 +32,7 @@ const DEFAULT_OPTIONS: Partial<GRPCServerOptions> = {
   config: {
     proto: {
       generate: true,
-      path: path.resolve(process.cwd(), '.cymbaline'),
+      path: path.resolve(process.cwd(), '.lumineer'),
     },
     packageName: 'app',
     credentials: gRPC.ServerCredentials.createInsecure(),

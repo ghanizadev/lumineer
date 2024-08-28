@@ -1,4 +1,4 @@
-import { GrpcPlugin, HookContext } from '@cymbaline/core';
+import { GrpcPlugin, HookContext } from '@lumineer/core';
 import * as protoLoader from '@grpc/proto-loader';
 import * as gRPC from '@grpc/grpc-js';
 import { GrpcServiceClient } from './service-client';

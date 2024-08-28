@@ -1,10 +1,4 @@
-import {
-  Message,
-  Enum,
-  PropertyType,
-  MessageRef,
-  OneOf,
-} from '@cymbaline/core';
+import { Message, Enum, PropertyType, MessageRef, OneOf } from '@lumineer/core';
 
 @Message()
 export class InputMessageType {

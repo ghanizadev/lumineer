@@ -1,12 +1,12 @@
 {
-  "name": "@cymbaline/server-reflection",
+  "name": "@lumineer/server-reflection",
   "version": "0.0.1",
   "dependencies": {
     "@grpc/reflection": "^1.0.4"
   },
   "peerDependencies": {
-    "@cymbaline/core": "^0.0.1",
-    "@cymbaline/logger": "^0.0.1",
+    "@lumineer/core": "^0.0.1",
+    "@lumineer/logger": "^0.0.1",
     "@grpc/grpc-js": "^1.11.1",
     "@grpc/proto-loader": "^0.7.13"
   }

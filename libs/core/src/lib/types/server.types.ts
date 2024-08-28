@@ -41,7 +41,7 @@ export type GRPCServerOptions = {
        * */
       generate?: boolean;
       /*
-       * Path to save the proto definition. Defaults to `<rootDir>/.cymbaline`
+       * Path to save the proto definition. Defaults to `<rootDir>/.lumineer`
        * */
       path?: string;
       /*

@@ -1,10 +1,10 @@
 import 'reflect-metadata';
 
-import { GRPCServer, ServerCredentials } from '@cymbaline/core';
-import { ServerReflectionPlugin } from '@cymbaline/server-reflection';
+import { GRPCServer, ServerCredentials } from '@lumineer/core';
+import { ServerReflectionPlugin } from '@lumineer/server-reflection';
 import { ServiceModule } from './services/service-a/service';
 import { ServiceB } from './services/service-b/service';
-import { GrpcClientPlugin } from '@cymbaline/client';
+import { GrpcClientPlugin } from '@lumineer/client';
 import { ChannelCredentials } from '@grpc/grpc-js';
 import { DataSource } from 'typeorm';
 import { DatabaseConnection } from './database';

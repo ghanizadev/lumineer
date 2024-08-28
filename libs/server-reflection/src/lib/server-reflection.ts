@@ -1,5 +1,5 @@
 import { ReflectionService } from '@grpc/reflection';
-import { GrpcPlugin, HookContext } from '@cymbaline/core';
+import { GrpcPlugin, HookContext } from '@lumineer/core';
 
 export class ServerReflectionPlugin extends GrpcPlugin {
   async postConfig(context: HookContext): Promise<void> {
