@@ -12,7 +12,7 @@ async function create(
       message: 'Choose a template',
       choices: [
         {
-          title: 'Empty',
+          title: 'Barebones',
           description: 'An empty project with an entry file.',
           value: '#00ffea',
         },

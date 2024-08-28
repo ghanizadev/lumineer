@@ -38,7 +38,13 @@
       "options": {
         "targetName": "test"
       },
-      "exclude": ["apps/lumineer-e2e/**/*", "apps/test-e2e/**/*"]
+      "exclude": [
+        "apps/lumineer-e2e/**/*",
+        "apps/test-e2e/**/*",
+        "apps/examples/basic-e2e/**/*",
+        "apps/examples/crud-e2e/**/*",
+        "apps/examples/barebones-e2e/**/*"
+      ]
     }
   ],
   "release": {
