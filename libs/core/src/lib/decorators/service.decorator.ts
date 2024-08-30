@@ -1,11 +1,11 @@
 import { SERVICE_TOKEN } from '../constants';
 import { injectable } from 'tsyringe';
 
-export const Service = () => {
-  return <T extends { new (...args: any[]): {} }>(constructor: T) => {
+export const Service = (options?: { name?: string }) => {
+  return <T extends { new (...args: any[]): any }>(constructor: T) => {
     Reflect.defineMetadata(
       SERVICE_TOKEN,
-      { name: constructor.name },
+      { name: options?.name ?? constructor.name },
       constructor
     );
     return injectable()(constructor);

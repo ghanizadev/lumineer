@@ -50,10 +50,8 @@ export class ProtoGenerator {
       this.proto.push('}', '');
 
       const processedMessages: RpcMessageType[] = [];
-      const messageTypes: RpcMessageType[] = Reflect.getMetadata(
-        'service:messages',
-        instance
-      );
+      const messageTypes: RpcMessageType[] =
+        Reflect.getMetadata('service:messages', instance) ?? [];
 
       for (const message of messageTypes) {
         if (message.refs) {
@@ -81,10 +79,10 @@ export class ProtoGenerator {
         processedMessages.push(messageType);
         this.processMessageType(messageType);
       }
+    }
 
-      for (const customType of this.customTypes) {
-        this.proto.push('', customType);
-      }
+    for (const customType of new Set(this.customTypes)) {
+      this.proto.push('', customType);
     }
 
     return this.proto.join('\n');

@@ -24,7 +24,7 @@ async function create(
         {
           title: 'Example project',
           description:
-            'A CRUD project with reflection, service clients and providers.',
+            'A CRUD project with reflection, service clients and providers, including all core features.',
           value: '#00ffea',
         },
       ],

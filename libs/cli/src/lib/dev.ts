@@ -3,6 +3,7 @@ import * as chokidar from 'chokidar';
 import * as cp from 'node:child_process';
 import * as process from 'node:process';
 import { Logger } from '@lumineer/logger';
+import * as treeKill from 'tree-kill';
 
 const CMD = 'npx ts-node ./src/main.ts';
 
@@ -10,17 +11,19 @@ const logger = new Logger('Dev', 'bgYellow');
 let childProcess: cp.ChildProcessWithoutNullStreams;
 
 function spawnServer() {
-  if (childProcess) {
-    process.kill(-childProcess.pid, 'SIGINT');
-  }
+  try {
+    childProcess = cp.spawn(CMD, {
+      cwd: process.cwd(),
+      env: { ...process.env, FORCE_COLOR: 1 } as any,
+      shell: true,
+      stdio: 'inherit',
+      killSignal: 'SIGINT',
+    });
 
-  childProcess = cp.spawn(CMD, {
-    cwd: process.cwd(),
-    env: { ...process.env, FORCE_COLOR: 1 } as any,
-    shell: true,
-    detached: true,
-    stdio: 'inherit',
-  });
+    childProcess.on('close', () => {
+      spawnServer();
+    });
+  } catch {}
 }
 
 async function dev(
@@ -35,23 +38,23 @@ async function dev(
   });
 
   watcher.on('change', () => {
-    logger.info('Restarting');
-    spawnServer();
+    logger.warn('Restarting');
+    treeKill(childProcess.pid);
   });
 
   watcher.on('ready', async () => {
-    spawnServer();
     logger.info('Ready');
+    spawnServer();
   });
 }
 
 process.on('SIGINT', () => {
-  process.kill(-childProcess.pid, 'SIGINT');
+  logger.warn('Closing the server...');
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  process.kill(-childProcess.pid, 'SIGINT');
+  logger.warn('Closing the server...');
   process.exit(0);
 });
 

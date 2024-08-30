@@ -2,22 +2,27 @@ import 'reflect-metadata';
 import 'jest-extended';
 import { ProtoGenerator } from '../src/lib/proto';
 import {
-  ArgumentType,
+  BidirectionalStreamCall,
+  ClientStreamCall,
   Message,
   OneOf,
   PropertyType,
-  ReturnType,
-  RPC,
+  ServerStreamCall,
   Service,
   ServiceConfig,
+  UnaryCall,
 } from '@lumineer/core';
 import { container } from 'tsyringe';
 
 describe('Proto generator', () => {
   let proto: ProtoGenerator;
 
+  beforeAll(async () => {
+    await import('reflect-metadata');
+  });
+
   beforeEach(() => {
-    proto = new ProtoGenerator('.test', '.proto', 'com.example.lumineer');
+    proto = new ProtoGenerator('.test', 'com.example.lumineer');
   });
 
   it('Should create proto file', () => {
@@ -29,9 +34,7 @@ describe('Proto generator', () => {
 
     @Service()
     class ServiceWithEmptyMessagesImpl {
-      @RPC()
-      @ArgumentType(EmptyArgumentImpl)
-      @ReturnType(EmptyReturnImpl)
+      @UnaryCall({ argument: EmptyArgumentImpl, return: EmptyReturnImpl })
       private HelloWorld() {}
     }
 
@@ -72,24 +75,16 @@ describe('Proto generator', () => {
 
     @Service()
     class ServiceWithStreamsImpl {
-      @RPC()
-      @ArgumentType(ArgumentImpl)
-      @ReturnType(ReturnImpl)
+      @UnaryCall({ argument: ArgumentImpl, return: ReturnImpl })
       private Unary() {}
 
-      @RPC()
-      @ArgumentType(ArgumentImpl, { stream: true })
-      @ReturnType(ReturnImpl)
+      @ClientStreamCall({ argument: ArgumentImpl, return: ReturnImpl })
       private ClientStream() {}
 
-      @RPC()
-      @ArgumentType(ArgumentImpl)
-      @ReturnType(ReturnImpl, { stream: true })
+      @ServerStreamCall({ argument: ArgumentImpl, return: ReturnImpl })
       private ServerStream() {}
 
-      @RPC()
-      @ArgumentType(ArgumentImpl, { stream: true })
-      @ReturnType(ReturnImpl, { stream: true })
+      @BidirectionalStreamCall({ argument: ArgumentImpl, return: ReturnImpl })
       private DuplexStream() {}
     }
 
@@ -122,8 +117,7 @@ describe('Proto generator', () => {
 
     @Service()
     class ServiceWithoutArgumentImpl {
-      @RPC()
-      @ReturnType(EmptyReturnImpl)
+      @UnaryCall({ return: EmptyReturnImpl })
       private HelloWorld() {}
     }
 
@@ -150,8 +144,7 @@ describe('Proto generator', () => {
 
     @Service()
     class ServiceWithoutReturnImpl {
-      @RPC()
-      @ArgumentType(EmptyArgumentImpl)
+      @UnaryCall({ argument: EmptyArgumentImpl })
       private HelloWorld() {}
     }
 
@@ -194,8 +187,7 @@ describe('Proto generator', () => {
 
     @Service()
     class GeneralService {
-      @RPC()
-      @ArgumentType(MessageWithOneOf)
+      @UnaryCall({ argument: MessageWithOneOf })
       private WithOneOf() {}
     }
 
@@ -236,8 +228,7 @@ describe('Proto generator', () => {
 
     @Service()
     class GeneralService {
-      @RPC()
-      @ArgumentType(MessageWithMultipleOneOf)
+      @UnaryCall({ argument: MessageWithMultipleOneOf })
       private SayHello() {}
     }
 
@@ -265,9 +256,7 @@ describe('Proto generator', () => {
 
     @Service()
     class ServiceWithNestedMessages {
-      @RPC()
-      @ArgumentType(EmptyArgumentImpl)
-      @ReturnType(EmptyReturnImpl)
+      @UnaryCall({ argument: EmptyArgumentImpl, return: EmptyReturnImpl })
       private HelloWorld() {}
     }
 

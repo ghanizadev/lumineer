@@ -3,13 +3,13 @@ import {
   GRPCClassMiddlewareType,
   GRPCFunctionMiddleware,
 } from './middleware.types';
-import { ClassConstructor } from './shared.types';
+import { ClassInstance } from './shared.types';
 
 export type GRPCServerOptions = {
   /*
    * Services to be included in this server
    * */
-  services: ClassConstructor[];
+  services: ClassInstance[];
   /*
    * Providers to be included in this server
    * */
@@ -17,7 +17,7 @@ export type GRPCServerOptions = {
     /*
      * Token to be injected during runtime
      * */
-    provide: ClassConstructor | string;
+    provide: ClassInstance | string;
     /*
      * Provide this token with a value. If a `Promise` is used, the server will
      * await its completion before starting the server
@@ -26,7 +26,7 @@ export type GRPCServerOptions = {
     /*
      * Instantiate the given class to provide a value for this token
      * */
-    useClass?: ClassConstructor;
+    useClass?: ClassInstance;
   }[];
   /*
    * Server configuration
@@ -66,7 +66,7 @@ export type GRPCServerOptions = {
 
 export type ServiceConfig = {
   name: string;
-  serviceClass: ClassConstructor;
+  serviceClass: ClassInstance;
   instance: any;
   middlewares?: {
     [key: string]: (GRPCFunctionMiddleware | GRPCClassMiddlewareType)[];

@@ -1,98 +1,102 @@
 import { SERVICE_MESSAGE_TOKEN, SERVICE_RPC_TOKEN } from '../constants';
 import * as _ from 'lodash';
-import { RpcMessageType, RpcMetadata } from '../types/message.types';
+import { RpcMessageType, RpcMetadata, ClassInstance, Optional } from '../types';
 
-export type RpcOptions = {};
-
-export type ArgumentOptions = {
-  stream?: boolean;
+export type RpcOptions = {
+  argument: ClassInstance;
+  return: ClassInstance;
 };
 
-export const RPC = (options: RpcOptions = {}) => {
+export type RpcTypeOptions = Partial<RpcOptions> & {
+  stream?: 'client' | 'server' | 'both';
+};
+
+const updateMessages = (type: any, typeInstance: any, target: any) => {
+  let propertiesMetadata = Reflect.getMetadata(
+    SERVICE_MESSAGE_TOKEN,
+    typeInstance
+  );
+  let messageMetadata = Reflect.getMetadata(SERVICE_MESSAGE_TOKEN, type);
+
+  const refs: Record<string, RpcMessageType> =
+    Reflect.getMetadata('message:refs', typeInstance) ?? {};
+  let message = _.merge(messageMetadata, propertiesMetadata, {
+    refs,
+  });
+  let messages = Reflect.getMetadata('service:messages', target) ?? [];
+
+  messages.push(message);
+
+  Reflect.defineMetadata('service:messages', messages, target);
+};
+
+export const rpcType = (options: RpcTypeOptions = {}) => {
   return (target: any, propertyKey: string) => {
-    let metadata: RpcMetadata = Reflect.getMetadata(
-      SERVICE_RPC_TOKEN + propertyKey,
-      target
-    );
+    let serviceMetadata: RpcMetadata =
+      Reflect.getMetadata(SERVICE_RPC_TOKEN, target) ?? {};
+
+    let metadata = serviceMetadata[propertyKey];
 
     if (!metadata) metadata = { rpcName: propertyKey };
 
+    switch (options.stream) {
+      case 'client':
+        metadata.clientStream = true;
+        break;
+      case 'server':
+        metadata.serverStream = true;
+        break;
+      case 'both':
+        metadata.clientStream = true;
+        metadata.serverStream = true;
+        break;
+      default:
+        break;
+    }
+
     metadata = _.merge(metadata, { ...metadata, ...(options ?? {}) });
 
-    Reflect.defineMetadata(SERVICE_RPC_TOKEN + propertyKey, metadata, target);
-  };
-};
-
-const rpcMessageType =
-  (
-    type: { new (...args: any[]): {} },
-    argType: 'return' | 'argument',
-    options?: ArgumentOptions
-  ) =>
-  (target: any, propertyKey: string) => {
-    let metadata: Record<string, RpcMetadata> =
-      Reflect.getMetadata(SERVICE_RPC_TOKEN, target) ?? {};
-
-    if (!metadata) {
-      throw new Error('Missing the RPC decorator?');
+    if (options.argument) {
+      const typeInstance = new options.argument();
+      const messageMetadata = Reflect.getMetadata(
+        SERVICE_MESSAGE_TOKEN,
+        options.argument
+      );
+      metadata.argumentTypeName =
+        messageMetadata.typeName ?? options.argument.name;
+      updateMessages(options.argument, typeInstance, target);
     }
 
-    let rpcMetadata = metadata[propertyKey];
-
-    if (!rpcMetadata) {
-      rpcMetadata = {
-        ...rpcMetadata,
-        rpcName: propertyKey,
-      };
+    if (options.return) {
+      const typeInstance = new options.return();
+      const messageMetadata = Reflect.getMetadata(
+        SERVICE_MESSAGE_TOKEN,
+        options.return
+      );
+      metadata.returnTypeName = messageMetadata.typeName ?? options.return.name;
+      updateMessages(options.return, typeInstance, target);
     }
 
-    if (options?.stream) {
-      if (argType === 'argument')
-        rpcMetadata = {
-          ...rpcMetadata,
-          clientStream: true,
-        };
-      else
-        rpcMetadata = {
-          ...rpcMetadata,
-          serverStream: true,
-        };
-    }
-
-    rpcMetadata[argType + 'TypeName'] = type.name;
-
-    metadata = _.merge(metadata, { [propertyKey]: rpcMetadata });
-    Reflect.defineMetadata(SERVICE_RPC_TOKEN, metadata, target);
-
-    const typeInstance = new type();
-    let propertiesMetadata = Reflect.getMetadata(
-      SERVICE_MESSAGE_TOKEN,
-      typeInstance
+    Reflect.defineMetadata(
+      SERVICE_RPC_TOKEN,
+      _.merge(serviceMetadata, { [propertyKey]: metadata }),
+      target
     );
-    let messageMetadata = Reflect.getMetadata(SERVICE_MESSAGE_TOKEN, type);
-
-    const refs: Record<string, RpcMessageType> =
-      Reflect.getMetadata('message:refs', typeInstance) ?? {};
-    let message = _.merge(messageMetadata, propertiesMetadata, {
-      refs,
-    });
-    let messages = Reflect.getMetadata('service:messages', target) ?? [];
-
-    messages.push(message);
-
-    Reflect.defineMetadata('service:messages', messages, target);
   };
-
-export const ArgumentType = (
-  argumentType: { new (...args: any[]): {} },
-  options?: ArgumentOptions
-) => {
-  return rpcMessageType(argumentType, 'argument', options);
 };
 
-export const ReturnType = (
-  returnType: { new (...args: any[]): {} },
-  options?: ArgumentOptions
-) => {
-  return rpcMessageType(returnType, 'return', options);
+export const UnaryCall = (options?: Partial<RpcOptions>) => {
+  return rpcType(options);
+};
+
+export const ClientStreamCall = (options: Optional<RpcOptions, 'return'>) => {
+  return rpcType({ ...options, stream: 'client' });
+};
+
+export const ServerStreamCall = (options: Optional<RpcOptions, 'argument'>) => {
+  return rpcType({ ...options, stream: 'server' });
+};
+
+export const BidirectionalStreamCall = (options: RpcOptions) => {
+  return rpcType({ ...options, stream: 'both' });
 };

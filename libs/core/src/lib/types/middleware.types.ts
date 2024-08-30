@@ -1,10 +1,11 @@
 import { Logger } from '@lumineer/logger';
+import { MetadataContent } from '../../index';
 
 export type MiddlewareContext = {
   logger: Logger;
-  request?: {
+  request: {
     body?: Record<string, any>;
-    metadata?: Record<string, any>;
+    metadata: MetadataContent;
   };
   call?: any;
   callback?: any;
