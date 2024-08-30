@@ -2,6 +2,8 @@ import * as gRPC from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import * as path from 'node:path';
 import * as _ from 'lodash';
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 import { container, DependencyContainer } from 'tsyringe';
 import { Logger, Logger as BaseLogger } from '@lumineer/logger';
 import { ProtoGenerator } from './proto';
@@ -11,13 +13,14 @@ import {
   ClassMiddlewareType,
   FunctionMiddleware,
   GrpcPlugin,
-  GRPCServerOptions,
+  ServerOptions,
   HookContext,
   HookStage,
   MiddlewareContext,
   MiddlewareHandler,
   ServiceConfig,
   RpcMetadata,
+  LumineerConfig,
 } from './types';
 import {
   SERVICE_MIDDLEWARE_TOKEN,
@@ -27,26 +30,25 @@ import {
 import { Handler } from './handler';
 import { ExceptionHandler } from './exception-handler';
 import * as process from 'node:process';
+import { ConfigLoader } from './config-loader';
+import * as fs from 'node:fs';
 
-const DEFAULT_OPTIONS: Partial<GRPCServerOptions> = {
+const DEFAULT_OPTIONS: Partial<ServerOptions> = {
   providers: [],
-  config: {
-    proto: {
-      generate: true,
-      path: path.resolve(process.cwd(), '.lumineer'),
-    },
-    logger: true,
-    packageName: 'app',
-    credentials: gRPC.ServerCredentials.createInsecure(),
-  },
+  credentials: gRPC.ServerCredentials.createInsecure(),
+};
+
+const DEFAULT_CONFIG: LumineerConfig = {
+  configFolder: path.resolve(process.cwd(), '.lumineer'),
+  packageName: 'app',
 };
 
 export class Lumineer {
   private readonly services: Record<string, ServiceConfig> = {};
-  private readonly protoGenerator: ProtoGenerator;
   private readonly plugins: GrpcPlugin[] = [];
   private readonly dependencyContainer: DependencyContainer;
   private readonly server: gRPC.Server;
+  private lumineerConfig: LumineerConfig;
 
   private readonly logger: BaseLogger;
 
@@ -56,24 +58,35 @@ export class Lumineer {
     | ClassMiddlewareType
     | InstanceType<ClassMiddlewareType>
   )[] = [];
-  private options: GRPCServerOptions;
+  private options: ServerOptions;
   private packageDefinition: protoLoader.PackageDefinition;
   private grpcObject: gRPC.GrpcObject;
   private package: gRPC.GrpcObject;
 
-  constructor(options: GRPCServerOptions) {
+  constructor(options: ServerOptions) {
     this.updateOptions(options);
     this.logger = new BaseLogger('Server');
     this.dependencyContainer = container.createChildContainer();
     this.server = new gRPC.Server();
 
-    this.protoGenerator = new ProtoGenerator(
-      this.options.config?.proto?.path!,
-      this.options.config?.proto?.file ?? this.options.config.packageName
-    );
+    if (this.getFlag('dryRun')) {
+      Promise.all([
+        this.config.apply(this),
+        this.configureModules.apply(this),
+      ]).then(() => {
+        process.exit(0);
+      });
+    }
+  }
+
+  private async loadConfig() {
+    const configLoader = new ConfigLoader();
+    this.lumineerConfig = await configLoader.loadConfig();
+    this.lumineerConfig = _.defaultsDeep(this.lumineerConfig, DEFAULT_CONFIG);
   }
 
   private async config() {
+    await this.loadConfig();
     await this.runHooks('onInit');
 
     for (const provider of this.options.providers) {
@@ -92,42 +105,46 @@ export class Lumineer {
 
     await this.parseServices(this.options.services);
 
-    if (this.options.config.proto.generate) {
+    if (this.getFlag('generateProtobufDefs')) {
       const start = performance.now();
-      const protoFile = this.protoGenerator.makeProtoFile(this.services);
-      this.protoGenerator.writeProtoFile(protoFile);
+
+      const protoGenerator = new ProtoGenerator(
+        this.lumineerConfig.configFolder,
+        this.lumineerConfig.packageName
+      );
+
+      const protoFile = protoGenerator.makeProtoFile(this.services);
+      protoGenerator.writeProtoFile(protoFile);
       const elapsed = (performance.now() - start).toFixed(2);
       this.logger.info(`File protobuf spec generated in ${elapsed}ms`);
     }
 
-    this.packageDefinition = protoLoader.loadSync(
-      this.protoGenerator.protoFilePath,
-      {
-        keepCase: true,
-        longs: String,
-        enums: String,
-        defaults: true,
-        oneofs: true,
-      }
-    );
+    this.packageDefinition = protoLoader.loadSync(this.loadProtoFiles(), {
+      keepCase: true,
+      longs: String,
+      enums: String,
+      defaults: true,
+      oneofs: true,
+    });
     this.grpcObject = gRPC.loadPackageDefinition(this.packageDefinition);
     this.package = _.get(
       this.grpcObject,
-      this.options.config.packageName
+      this.lumineerConfig.packageName
     ) as gRPC.GrpcObject;
   }
 
   public async run(port: string | number) {
+    if (this.getFlag('dryRun')) return;
+
     await this.config();
     await this.configureModules();
 
     this.server.bindAsync(
       typeof port === 'string' ? port : '127.0.0.1:' + port,
-      this.options.config.credentials,
+      this.options.credentials,
       (err, port) => {
         this.port = port;
-        if (this.options.config?.logger)
-          this.logger.info('Server started at ' + port);
+        this.logger.info('Server started at ' + port);
       }
     );
 
@@ -161,11 +178,32 @@ export class Lumineer {
     this.logger.info(`Plugin "${instance.constructor.name}" added.`);
   }
 
+  private getFlag(flag: string) {
+    const argv = yargs(hideBin(process.argv)).argv;
+    return argv[flag];
+  }
+
   private shutdown() {
     this.server.tryShutdown((e) => {
       if (e) console.error(e);
       process.exit(0);
     });
+  }
+
+  private loadProtoFiles() {
+    if (!fs.existsSync(this.lumineerConfig.configFolder))
+      throw new Error('Configuration was not found');
+
+    const files = fs.readdirSync(this.lumineerConfig.configFolder);
+
+    return files
+      .filter((file) => {
+        const stat = fs.statSync(
+          path.resolve(this.lumineerConfig.configFolder, file)
+        );
+        return stat.isFile() && file.endsWith('.proto');
+      })
+      .map((file) => path.resolve(this.lumineerConfig.configFolder, file));
   }
 
   private async runHooks(
@@ -338,7 +376,7 @@ export class Lumineer {
     };
   }
 
-  private updateOptions(options?: GRPCServerOptions) {
+  private updateOptions(options?: ServerOptions) {
     if (options) this.options = _.defaultsDeep(options, DEFAULT_OPTIONS);
   }
 

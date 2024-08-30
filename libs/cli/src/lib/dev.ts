@@ -5,7 +5,7 @@ import * as process from 'node:process';
 import { Logger } from '@lumineer/logger';
 import * as treeKill from 'tree-kill';
 
-const CMD = 'npx ts-node ./src/main.ts';
+const CMD = 'npx ts-node ./src/main.ts --generateProtobufDefs=1';
 
 const logger = new Logger('Dev', 'bgYellow');
 let childProcess: cp.ChildProcessWithoutNullStreams;
@@ -58,8 +58,6 @@ process.on('SIGTERM', () => {
 
 const command = new Command('dev')
   .description('Start the development server')
-  .option('-p, --port', 'Build the development version')
-  .option('-H, --host', 'Build the development version')
   .action(dev);
 
 export default command;

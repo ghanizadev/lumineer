@@ -2,7 +2,7 @@ import * as gRPC from '@grpc/grpc-js';
 import { ClassMiddlewareType, FunctionMiddleware } from './middleware.types';
 import { ClassConstructor } from './shared.types';
 
-export type GRPCServerOptions = {
+export type ServerOptions = {
   /*
    * Services to be included in this server
    * */
@@ -25,40 +25,7 @@ export type GRPCServerOptions = {
      * */
     useClass?: ClassConstructor;
   }[];
-  /*
-   * Server configuration
-   * */
-  config?: {
-    /*
-     * Proto file configuration
-     * */
-    proto?: {
-      /*
-       * Generate proto file base on the defined schema
-       * */
-      generate?: boolean;
-      /*
-       * Path to save the proto definition. Defaults to `<rootDir>/.lumineer`
-       * */
-      path?: string;
-      /*
-       * File name to be used for the default proto file. Defaults to `{packageName}.proto`
-       * */
-      file?: string;
-    };
-    /*
-     * Use `stdout` logging
-     * */
-    logger?: boolean;
-    /*
-     * Package name. Defaults to `app`
-     * */
-    packageName?: string;
-    /*
-     * Server credentials to be used by the server to instantiate the gRPC services
-     * */
-    credentials: gRPC.ServerCredentials;
-  };
+  credentials: gRPC.ServerCredentials;
 };
 
 export type ServiceConfig = {

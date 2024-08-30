@@ -264,6 +264,13 @@ export class ProtoGenerator {
       fs.mkdirSync(this.protoPath, { recursive: true });
     }
 
+    for (const file of fs.readdirSync(this.protoPath)) {
+      const stat = fs.statSync(path.resolve(this.protoPath, file));
+
+      if (stat.isFile() && file.endsWith('.proto')) {
+        fs.unlinkSync(path.resolve(this.protoPath, file));
+      }
+    }
     fs.writeFileSync(this.protoFilePath, protoContents);
   }
 
