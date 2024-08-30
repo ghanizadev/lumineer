@@ -1,15 +1,12 @@
 import * as gRPC from '@grpc/grpc-js';
-import {
-  GRPCClassMiddlewareType,
-  GRPCFunctionMiddleware,
-} from './middleware.types';
-import { ClassInstance } from './shared.types';
+import { ClassMiddlewareType, FunctionMiddleware } from './middleware.types';
+import { ClassConstructor } from './shared.types';
 
 export type GRPCServerOptions = {
   /*
    * Services to be included in this server
    * */
-  services: ClassInstance[];
+  services: ClassConstructor[];
   /*
    * Providers to be included in this server
    * */
@@ -17,7 +14,7 @@ export type GRPCServerOptions = {
     /*
      * Token to be injected during runtime
      * */
-    provide: ClassInstance | string;
+    provide: ClassConstructor | string;
     /*
      * Provide this token with a value. If a `Promise` is used, the server will
      * await its completion before starting the server
@@ -26,7 +23,7 @@ export type GRPCServerOptions = {
     /*
      * Instantiate the given class to provide a value for this token
      * */
-    useClass?: ClassInstance;
+    useClass?: ClassConstructor;
   }[];
   /*
    * Server configuration
@@ -66,9 +63,9 @@ export type GRPCServerOptions = {
 
 export type ServiceConfig = {
   name: string;
-  serviceClass: ClassInstance;
+  serviceClass: ClassConstructor;
   instance: any;
   middlewares?: {
-    [key: string]: (GRPCFunctionMiddleware | GRPCClassMiddlewareType)[];
+    [key: string]: (FunctionMiddleware | ClassMiddlewareType)[];
   };
 };

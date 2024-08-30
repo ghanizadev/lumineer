@@ -1,10 +1,15 @@
 import { SERVICE_MESSAGE_TOKEN, SERVICE_RPC_TOKEN } from '../constants';
 import * as _ from 'lodash';
-import { RpcMessageType, RpcMetadata, ClassInstance, Optional } from '../types';
+import {
+  RpcMessageType,
+  RpcMetadata,
+  ClassConstructor,
+  Optional,
+} from '../types';
 
 export type RpcOptions = {
-  argument: ClassInstance;
-  return: ClassInstance;
+  argument: ClassConstructor;
+  return: ClassConstructor;
 };
 
 export type RpcTypeOptions = Partial<RpcOptions> & {

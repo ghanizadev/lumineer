@@ -73,7 +73,9 @@ export class ProtoGenerator {
       }
 
       for (const messageType of messageTypes) {
-        if (processedMessages.find((msg) => _.isEqual(msg, messageType)))
+        if (
+          processedMessages.find((msg) => msg.typeName === messageType.typeName)
+        )
           continue;
 
         processedMessages.push(messageType);
@@ -81,7 +83,7 @@ export class ProtoGenerator {
       }
     }
 
-    for (const customType of new Set(this.customTypes)) {
+    for (const customType of this.customTypes) {
       this.proto.push('', customType);
     }
 

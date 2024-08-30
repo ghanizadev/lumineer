@@ -6,10 +6,10 @@ import { container, DependencyContainer } from 'tsyringe';
 import { Logger, Logger as BaseLogger } from '@lumineer/logger';
 import { ProtoGenerator } from './proto';
 import {
-  ClassInstance,
-  GRPCClassMiddleware,
-  GRPCClassMiddlewareType,
-  GRPCFunctionMiddleware,
+  ClassConstructor,
+  ClassMiddleware,
+  ClassMiddlewareType,
+  FunctionMiddleware,
   GrpcPlugin,
   GRPCServerOptions,
   HookContext,
@@ -35,12 +35,13 @@ const DEFAULT_OPTIONS: Partial<GRPCServerOptions> = {
       generate: true,
       path: path.resolve(process.cwd(), '.lumineer'),
     },
+    logger: true,
     packageName: 'app',
     credentials: gRPC.ServerCredentials.createInsecure(),
   },
 };
 
-export class GRPCServer {
+export class Lumineer {
   private readonly services: Record<string, ServiceConfig> = {};
   private readonly protoGenerator: ProtoGenerator;
   private readonly plugins: GrpcPlugin[] = [];
@@ -51,8 +52,9 @@ export class GRPCServer {
 
   private port: number;
   private globalMiddlewares: (
-    | GRPCFunctionMiddleware
-    | GRPCClassMiddlewareType
+    | FunctionMiddleware
+    | ClassMiddlewareType
+    | InstanceType<ClassMiddlewareType>
   )[] = [];
   private options: GRPCServerOptions;
   private packageDefinition: protoLoader.PackageDefinition;
@@ -142,7 +144,7 @@ export class GRPCServer {
     this.runHooks('onShutdown').catch();
   }
 
-  public use(middleware: GRPCFunctionMiddleware | GRPCClassMiddlewareType) {
+  public use(middleware: FunctionMiddleware | ClassMiddlewareType) {
     this.globalMiddlewares.push(middleware);
   }
 
@@ -185,7 +187,7 @@ export class GRPCServer {
     );
   }
 
-  private async parseServices(services: ClassInstance[]) {
+  private async parseServices(services: ClassConstructor[]) {
     for (const service of services) {
       const start = performance.now();
 
@@ -271,11 +273,27 @@ export class GRPCServer {
 
             for (const middleware of this.globalMiddlewares) {
               const mw = this.processMiddleware(middleware);
-              await mw.call(mw, this.makeMiddlewareContext(call, callback));
+              await mw.call(
+                mw,
+                this.makeMiddlewareContext(
+                  data.instance,
+                  rpc.rpcName,
+                  call,
+                  callback
+                )
+              );
             }
 
             for (const mw of middlewares) {
-              await mw.call(mw, this.makeMiddlewareContext(call, callback));
+              await mw.call(
+                mw,
+                this.makeMiddlewareContext(
+                  data.instance,
+                  rpc.rpcName,
+                  call,
+                  callback
+                )
+              );
             }
 
             await handlerInstance.invoke(call, callback);
@@ -301,7 +319,12 @@ export class GRPCServer {
     await this.runHooks('postConfig');
   }
 
-  private makeMiddlewareContext(call?: any, callback?: any): MiddlewareContext {
+  private makeMiddlewareContext(
+    instance: any,
+    handlerName: string,
+    call?: any,
+    callback?: any
+  ): MiddlewareContext {
     return {
       logger: new Logger('Middleware', 'bgYellow'),
       call,
@@ -310,6 +333,8 @@ export class GRPCServer {
         metadata: call?.metadata,
       },
       callback,
+      instance,
+      handlerName,
     };
   }
 
@@ -321,7 +346,7 @@ export class GRPCServer {
     middleware: any
   ): (context: MiddlewareContext) => Promise<void> | void {
     if (middleware.prototype && middleware.constructor.name) {
-      const instance = container.resolve<GRPCClassMiddleware>(middleware);
+      const instance = container.resolve<ClassMiddleware>(middleware);
       return instance.handle.bind(instance);
     }
 

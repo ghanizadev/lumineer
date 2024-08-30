@@ -1,12 +1,12 @@
 import * as _ from 'lodash';
 import { SERVICE_MIDDLEWARE_TOKEN } from '../constants';
-import { GRPCFunctionMiddleware, GRPCClassMiddlewareType } from '../types';
+import { FunctionMiddleware, ClassMiddlewareType } from '../types';
 
 export const Middleware = (
   ...middleware: (
-    | GRPCFunctionMiddleware
-    | GRPCClassMiddlewareType
-    | InstanceType<GRPCClassMiddlewareType>
+    | FunctionMiddleware
+    | ClassMiddlewareType
+    | InstanceType<ClassMiddlewareType>
   )[]
 ) => {
   return (target: any, propertyKey?: string) => {

@@ -1,6 +1,7 @@
 import { SERVICE_MESSAGE_TOKEN } from '../constants';
 import { RpcMessageType, RpcProperty, RpcScalar } from '../types/message.types';
 import * as _ from 'lodash';
+import { ClassConstructor } from '../types';
 
 export type DecoratorFunction = (target: any, propertyKey: string) => void;
 
@@ -10,9 +11,8 @@ export type TransformFunction<T = any> = (
 ) => T;
 
 export type PropertyTypeOptions = {
-  required?: boolean;
   repeated?: boolean;
-  options?: boolean;
+  optional?: boolean;
 };
 
 export type PropertyTypeMapOptions = {
@@ -22,6 +22,8 @@ export type PropertyTypeMapOptions = {
 
 export type PropertyRefOptions = {
   blockScoped?: boolean;
+  repeated?: boolean;
+  optional?: boolean;
 };
 
 export function PropertyType(
@@ -141,8 +143,8 @@ function propertyTypeImpl(
 }
 
 export const MessageRef = (
-  ref: { new (): {} },
-  options?: PropertyRefOptions
+  ref: ClassConstructor,
+  options: PropertyRefOptions = {}
 ) => {
   return (target: any, propertyKey: string) => {
     const typeInstance = new ref();
@@ -157,12 +159,7 @@ export const MessageRef = (
     let messages = Reflect.getMetadata('message:refs', target) ?? {};
 
     messages[propertyKey] = message;
-
-    if (options) {
-      message = _.merge(message, options);
-    } else {
-      message = _.merge(message, { blockScoped: false });
-    }
+    message = _.merge(message, options);
 
     Reflect.defineMetadata('message:refs', messages, target);
 
@@ -170,10 +167,13 @@ export const MessageRef = (
       SERVICE_MESSAGE_TOKEN,
       target
     );
-    let property: RpcProperty = {
-      ref: message.typeName,
-      propertyName: propertyKey,
-    };
+    let property: RpcProperty = _.defaultsDeep(
+      {
+        ref: message.typeName,
+        propertyName: propertyKey,
+      },
+      options
+    );
 
     metadata = _.merge(metadata, {
       properties: {

@@ -9,19 +9,21 @@ export type MiddlewareContext = {
   };
   call?: any;
   callback?: any;
+  instance: any;
+  handlerName: string;
 };
 
 export type MiddlewareHandler = (
   context: MiddlewareContext
 ) => Promise<void> | void;
 
-export type GRPCFunctionMiddleware = (
+export type FunctionMiddleware = (
   context: MiddlewareContext
 ) => Promise<void> | void;
 
-export type GRPCClassMiddlewareType = { new (...args: any[]): {} };
+export type ClassMiddlewareType = { new (...args: any[]): {} };
 
-export abstract class GRPCClassMiddleware {
+export abstract class ClassMiddleware {
   protected readonly logger = new Logger('Middleware', 'bgYellow');
   abstract handle(context: MiddlewareContext): Promise<void> | void;
 }

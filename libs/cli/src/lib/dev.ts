@@ -17,11 +17,6 @@ function spawnServer() {
       env: { ...process.env, FORCE_COLOR: 1 } as any,
       shell: true,
       stdio: 'inherit',
-      killSignal: 'SIGINT',
-    });
-
-    childProcess.on('close', () => {
-      spawnServer();
     });
   } catch {}
 }
@@ -40,6 +35,7 @@ async function dev(
   watcher.on('change', () => {
     logger.warn('Restarting');
     treeKill(childProcess.pid);
+    spawnServer();
   });
 
   watcher.on('ready', async () => {
@@ -50,11 +46,13 @@ async function dev(
 
 process.on('SIGINT', () => {
   logger.warn('Closing the server...');
+  treeKill(childProcess.pid);
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
   logger.warn('Closing the server...');
+  treeKill(childProcess.pid);
   process.exit(0);
 });
 
