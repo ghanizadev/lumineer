@@ -37,4 +37,6 @@ jobs:
           netlify deploy \
             --dir dist/apps/docs \
             --site ${{ secrets.NETLIFY_SITE_ID }} \
-            --auth ${{ secrets.NETLIFY_API_TOKEN }}
+            --auth ${{ secrets.NETLIFY_API_TOKEN }} \
+            --prod \
+            --filter docs
