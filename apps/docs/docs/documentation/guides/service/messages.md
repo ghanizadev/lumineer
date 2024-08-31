@@ -33,4 +33,3 @@ class PublicArticle {
 // [...]
 }
 ```
-## Nested Messages

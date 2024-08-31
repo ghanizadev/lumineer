@@ -50,9 +50,15 @@ const config = {
         items: [
           {
             type: 'doc',
-            docId: 'overview',
+            docId: 'documentation/overview',
             position: 'left',
-            label: 'Tutorial',
+            label: 'Documentation',
+          },
+          {
+            type: 'doc',
+            docId: 'api/classes/lumineer',
+            position: 'left',
+            label: 'API',
           },
           {
             href: 'https://github.com/facebook/docusaurus',
@@ -68,8 +74,8 @@ const config = {
             title: 'Docs',
             items: [
               {
-                label: 'Docs',
-                to: '/docs/overview',
+                label: 'Documentation',
+                to: '/docs/documentation/overview',
               },
             ],
           },
@@ -93,10 +99,10 @@ const config = {
           {
             title: 'More',
             items: [
-              // {
-              //   label: 'Blog',
-              //   to: '/blog',
-              // },
+              {
+                label: 'API',
+                to: '/api',
+              },
               {
                 label: 'GitHub',
                 href: 'https://github.com/facebook/docusaurus',

@@ -5,14 +5,12 @@ title: Service
 A minimal service configuration is:
 
 ```typescript
-import { 
+import {
   PropertyType,
   Message,
   Service,
-  RPC,
-  ArgumentType,
-  ReturnType,
-  BodyParam
+  Payload,
+  UnaryCall,
 } from '@lumineer/core';
 
 @Message()
@@ -47,10 +45,8 @@ class User {
 
 @Service()
 class UserService {
-  @RPC()
-  @ArgumentType(CreateUser)
-  @ReturnType(User)
-  private async CreateUser(@BodyParam() requestBody: CreateUser): Promise<User> {
+  @UnaryCall({ argument: CreateUser, return: User })
+  private async CreateUser(@Payload() requestBody: CreateUser): Promise<User> {
     // [...]
   }
 }
