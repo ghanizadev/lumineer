@@ -27,4 +27,4 @@ message MessageWithMap {
 }
 ```
 
-Also, maps cannot have another map as value, due to `protobuf` [limitation](https://protobuf.dev/programming-guides/proto3/#maps). If you desire to have nested maps, consider refactoring to different messages or using [references](/docs/tutorial/guides/service/property-type#reference-another-message).
+Also, maps cannot have another map as value, due to `protobuf` [limitation](https://protobuf.dev/programming-guides/proto3/#maps). If you desire to have nested maps, consider refactoring to different messages or using [references](/docs/documentation/guides/service/property-type#reference-another-message).

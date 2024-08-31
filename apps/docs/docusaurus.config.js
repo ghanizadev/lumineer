@@ -101,7 +101,7 @@ const config = {
             items: [
               {
                 label: 'API',
-                to: '/api',
+                to: '/docs/api',
               },
               {
                 label: 'GitHub',

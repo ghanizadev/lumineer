@@ -48,3 +48,8 @@ Thumbs.db
 # Generated Docusaurus files
 .docusaurus/
 .cache-loader/
+
+# Local Netlify folder
+.netlify
+
+.env
