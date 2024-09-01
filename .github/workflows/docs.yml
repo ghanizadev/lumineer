@@ -6,7 +6,7 @@ on:
       - 'main'
     tags:
       - v*.*.*
-      
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest

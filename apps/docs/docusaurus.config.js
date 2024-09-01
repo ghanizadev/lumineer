@@ -6,14 +6,14 @@ const { themes } = require('prism-react-renderer');
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'Lumineer',
-  tagline: 'Dinosaurs are cool',
+  tagline: 'A code-first gRPC framework for building efficient services',
   url: 'https://lumineer.ghanizadev.com',
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
-  organizationName: 'ghanizadev', // Usually your GitHub org/user name.
-  projectName: 'Lumineer', // Usually your repo name.
+  organizationName: 'ghanizadev',
+  projectName: 'Lumineer',
 
   presets: [
     [
@@ -61,7 +61,7 @@ const config = {
             label: 'API',
           },
           {
-            href: 'https://github.com/facebook/docusaurus',
+            href: 'https://github.com/ghanizadev/lumineer',
             label: 'GitHub',
             position: 'right',
           },
@@ -77,6 +77,10 @@ const config = {
                 label: 'Documentation',
                 to: '/docs/documentation/overview',
               },
+              {
+                label: 'API',
+                to: '/docs/api',
+              },
             ],
           },
           {
@@ -84,15 +88,11 @@ const config = {
             items: [
               {
                 label: 'Stack Overflow',
-                href: 'https://stackoverflow.com/questions/tagged/docusaurus',
+                href: 'https://stackoverflow.com/questions/tagged/lumineer',
               },
               {
                 label: 'Discord',
                 href: 'https://discordapp.com/invite/docusaurus',
-              },
-              {
-                label: 'Twitter',
-                href: 'https://twitter.com/docusaurus',
               },
             ],
           },
@@ -100,12 +100,8 @@ const config = {
             title: 'More',
             items: [
               {
-                label: 'API',
-                to: '/docs/api',
-              },
-              {
                 label: 'GitHub',
-                href: 'https://github.com/facebook/docusaurus',
+                href: 'https://github.com/ghanizadev/lumineer',
               },
             ],
           },
