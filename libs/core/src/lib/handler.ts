@@ -1,7 +1,8 @@
 import * as gRPC from '@grpc/grpc-js';
-import { SERVICE_RPC_ARGS_TOKEN } from './constants';
+import { InternalException } from '@lumineer/core';
 import { Logger } from '@lumineer/logger';
-import { RpcMetadata } from './types/message.types';
+import { SERVICE_RPC_ARGS_TOKEN } from './constants';
+import { RpcMetadata } from './types';
 
 export type HandlerContext = {
   data: any;
@@ -111,28 +112,29 @@ export class Handler {
     const { data, metadata } = this.handlerContext;
 
     try {
-      call.on('data', async (chunk: any) => {
-        const argMetadata = Reflect.getMetadata(
-          SERVICE_RPC_ARGS_TOKEN,
-          data.instance,
-          metadata.rpcName
+      const argMetadata = Reflect.getMetadata(
+        SERVICE_RPC_ARGS_TOKEN,
+        data.instance,
+        metadata.rpcName
+      );
+
+      let hasStream = false;
+      for (const key in argMetadata) {
+        if (argMetadata[key].type === 'body') {
+          throw new InternalException(
+            'Seems you are trying to access the payload from a bidirectional stream type call. Maybe you wanted to use the "stream" parameter instead.'
+          );
+        } else if (argMetadata[key].type === 'stream') {
+          hasStream = true;
+        }
+      }
+
+      if (!hasStream)
+        this.logger.warn(
+          `The "${metadata.rpcName}" call method is type of bidirectional stream, but does not load any stream argument. Did you forget to load?`
         );
 
-        let bodyIndex = -1;
-
-        for (const key in argMetadata) {
-          if (argMetadata[key].type === 'body') {
-            bodyIndex = +key;
-            break;
-          }
-        }
-
-        if (bodyIndex !== -1) {
-          let updatedArgs = [...args];
-          updatedArgs[bodyIndex] = chunk;
-          fn(...updatedArgs);
-        }
-      });
+      await Promise.resolve(fn(...args));
     } catch (e) {
       call.emit('error', { code: gRPC.status.INTERNAL, message: e.message });
       this.logger.error(`RPC to ${data.name}.${metadata.rpcName} failed: ${e}`);
@@ -164,36 +166,37 @@ export class Handler {
   private async handleClientStreamingCall(
     fn: any,
     args: any[],
-    call: HandlerCall,
+    _: HandlerCall,
     callback: HandlerCallback
   ) {
     const { data, metadata } = this.handlerContext;
     try {
-      call.on('data', async (chunk: any) => {
-        const argMetadata = Reflect.getMetadata(
-          SERVICE_RPC_ARGS_TOKEN,
-          data.instance,
-          metadata.rpcName
+      const argMetadata = Reflect.getMetadata(
+        SERVICE_RPC_ARGS_TOKEN,
+        data.instance,
+        metadata.rpcName
+      );
+
+      let hasStream = false;
+      for (const key in argMetadata) {
+        if (argMetadata[key].type === 'body') {
+          throw new InternalException(
+            'Seems you are trying to access the payload from a client stream type call. Maybe you wanted to use the "stream" parameter instead.'
+          );
+        } else if (argMetadata[key].type === 'stream') {
+          hasStream = true;
+        }
+      }
+
+      if (!hasStream)
+        this.logger.warn(
+          `The "${metadata.rpcName}" call method is type of client stream, but does not load any stream argument. Did you forget to load?`
         );
 
-        let bodyIndex = -1;
-
-        for (const key in argMetadata) {
-          if (argMetadata[key].type === 'body') {
-            bodyIndex = +key;
-            break;
-          }
-        }
-
-        if (bodyIndex !== -1) {
-          let updatedArgs = [...args];
-          updatedArgs[bodyIndex] = chunk;
-          const response = await Promise.resolve(fn(...updatedArgs));
-          if (response) {
-            callback(null, response);
-          }
-        }
-      });
+      const response = await Promise.resolve(fn(...args));
+      if (response) {
+        callback(null, response);
+      }
     } catch (e) {
       callback(e);
       this.logger.error(`RPC to ${data.name}.${metadata.rpcName} failed: ${e}`);
