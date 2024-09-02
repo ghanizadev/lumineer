@@ -53,3 +53,6 @@ Thumbs.db
 .netlify
 
 .env
+
+*.proto
+!/libs/server-reflection/**/*.proto

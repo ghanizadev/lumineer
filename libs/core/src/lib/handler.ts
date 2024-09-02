@@ -149,14 +149,8 @@ export class Handler {
     const { metadata, data } = this.handlerContext;
 
     try {
-      if (fn.constructor.name.includes('GeneratorFunction')) {
-        for await (const response of fn(...args)) {
-          call.write(response);
-        }
-        call.end();
-      } else {
-        await Promise.resolve(fn(...args));
-      }
+      // TODO implement async generators
+      await Promise.resolve(fn(...args));
     } catch (e) {
       this.logger.error(`RPC to ${data.name}.${metadata.rpcName} failed: ${e}`);
       call.emit('error', { code: gRPC.status.INTERNAL });

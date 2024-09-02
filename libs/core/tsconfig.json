@@ -3,9 +3,13 @@
   "compilerOptions": {
     "module": "commonjs",
     "strictPropertyInitialization": false,
+    "lib": ["ESNext"]
   },
   "files": [],
   "include": [],
+  "exclude": [
+    "./fixtures/**/*"
+  ],
   "references": [
     {
       "path": "./tsconfig.lib.json"
@@ -13,5 +17,5 @@
     {
       "path": "./tsconfig.spec.json"
     }
-  ],
+  ]
 }
