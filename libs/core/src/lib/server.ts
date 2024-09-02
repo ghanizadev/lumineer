@@ -32,6 +32,7 @@ import { ExceptionHandler } from './exception-handler';
 import * as process from 'node:process';
 import { ConfigLoader } from './config-loader';
 import * as fs from 'node:fs';
+import { EventEmitter } from 'node:events';
 
 const DEFAULT_OPTIONS: Partial<ServerOptions> = {
   providers: [],
@@ -48,11 +49,10 @@ export class Lumineer {
   private readonly plugins: GrpcPlugin[] = [];
   private readonly dependencyContainer: DependencyContainer;
   private readonly server: gRPC.Server;
-  private lumineerConfig: LumineerConfig;
-
+  private readonly events: EventEmitter;
   private readonly logger: BaseLogger;
 
-  private port: number;
+  private lumineerConfig: LumineerConfig;
   private globalMiddlewares: (
     | FunctionMiddleware
     | ClassMiddlewareType
@@ -63,11 +63,15 @@ export class Lumineer {
   private grpcObject: gRPC.GrpcObject;
   private package: gRPC.GrpcObject;
 
+  private port = 0;
+  private listening = false;
+
   constructor(options: ServerOptions) {
     this.updateOptions(options);
     this.logger = new BaseLogger('Server');
     this.dependencyContainer = container.createChildContainer();
     this.server = new gRPC.Server();
+    this.events = new EventEmitter();
 
     if (this.getFlag('dryRun')) {
       Promise.all([
@@ -145,6 +149,8 @@ export class Lumineer {
       (err, port) => {
         this.port = port;
         this.logger.info('Server started at ' + port);
+        this.listening = true;
+        this.events.emit('listen');
       }
     );
 
@@ -155,10 +161,11 @@ export class Lumineer {
     process.on('SIGHUP', shutdownHandler);
   }
 
-  public close() {
+  public async close() {
+    this.runHooks('onShutdown').catch();
     this.server.unbind('127.0.0.1:' + this.port);
     this.server.forceShutdown();
-    this.runHooks('onShutdown').catch();
+    this.events.emit('close');
   }
 
   public use(middleware: FunctionMiddleware | ClassMiddlewareType) {
@@ -178,16 +185,28 @@ export class Lumineer {
     this.logger.info(`Plugin "${instance.constructor.name}" added.`);
   }
 
+  get isListening(): Promise<boolean> {
+    if (this.listening) return Promise.resolve(true);
+    return new Promise((res) => {
+      this.events.on('listen', () => {
+        res(true);
+      });
+
+      setTimeout(() => res(false), 30_000);
+    });
+  }
+
+  get listenPort() {
+    return this.port;
+  }
+
   private getFlag(flag: string) {
     const argv = yargs(hideBin(process.argv)).argv;
     return argv[flag];
   }
 
   private shutdown() {
-    this.server.tryShutdown((e) => {
-      if (e) console.error(e);
-      process.exit(0);
-    });
+    this.server.forceShutdown();
   }
 
   private loadProtoFiles() {
