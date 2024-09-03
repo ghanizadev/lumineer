@@ -1,5 +1,5 @@
 import * as gRPC from '@grpc/grpc-js';
-import { GrpcException } from './base.exception';
+import { ServerException } from './base.exception';
 
 /*
  * The caller does not have permission to execute the specified operation.
@@ -10,7 +10,7 @@ import { GrpcException } from './base.exception';
  * imply the request is valid or the requested entity exists or satisfies other
  * pre-conditions.
  * */
-export class PermissionDeniedException extends GrpcException {
+export class PermissionDeniedException extends ServerException {
   constructor(message?: string) {
     super(gRPC.status.PERMISSION_DENIED, message);
   }

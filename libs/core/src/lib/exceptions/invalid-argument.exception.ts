@@ -1,5 +1,5 @@
 import * as gRPC from '@grpc/grpc-js';
-import { GrpcException } from './base.exception';
+import { ServerException } from './base.exception';
 
 /*
  * The client specified an invalid argument. Note that this differs from
@@ -7,7 +7,7 @@ import { GrpcException } from './base.exception';
  * problematic regardless of the state of the system (e.g., a malformed file
  * name).
  * */
-export class InvalidArgumentException extends GrpcException {
+export class InvalidArgumentException extends ServerException {
   constructor(message?: string) {
     super(gRPC.status.INVALID_ARGUMENT, message);
   }

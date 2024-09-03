@@ -1,5 +1,5 @@
 import * as gRPC from '@grpc/grpc-js';
-import { GrpcException } from './base.exception';
+import { ServerException } from './base.exception';
 
 /*
  * Unknown error. For example, this error may be returned when a `Status` value
@@ -7,7 +7,7 @@ import { GrpcException } from './base.exception';
  * known in this address space. Also, errors raised by APIs that do not return
  * enough error information may be converted to this error.
  * */
-export class UnknownException extends GrpcException {
+export class UnknownException extends ServerException {
   constructor(message?: string) {
     super(gRPC.status.UNKNOWN, message);
   }

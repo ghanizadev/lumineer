@@ -1,5 +1,5 @@
 import * as gRPC from '@grpc/grpc-js';
-import { GrpcException } from './base.exception';
+import { ServerException } from './base.exception';
 
 /*
  * Some requested entity (e.g., file or directory) was not found. Note to
@@ -8,7 +8,7 @@ import { GrpcException } from './base.exception';
  * If a request is denied for some users within a class of users, such as
  * user-based access control, `PERMISSION_DENIED` must be used.
  * */
-export class NotFoundException extends GrpcException {
+export class NotFoundException extends ServerException {
   constructor(message?: string) {
     super(gRPC.status.NOT_FOUND, message);
   }
