@@ -8,8 +8,8 @@ export default {
     '^.+\\.[tj]s$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.spec.json' }],
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
-  coverageDirectory: '../../coverage/libs/core',
+  coverageDirectory: './coverage',
   setupFilesAfterEnv: ['./__tests__/setup.ts'],
   collectCoverage: true,
-  coverageReporters: ['lcov'],
+  coverageReporters: ['lcovonly'],
 } as Config;
