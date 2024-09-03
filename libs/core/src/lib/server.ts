@@ -364,6 +364,9 @@ export class Lumineer {
             });
           } catch (e) {
             ExceptionHandler.handleError(e, call, callback);
+            this.logger.error(
+              `RPC to ${data.name}.${rpc.rpcName} failed: ${e}`
+            );
           }
         };
 

@@ -5,6 +5,7 @@ import anymatch from 'anymatch';
 import { LumineerConfig } from './types';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
+import { CWD } from './constants';
 
 export class ConfigLoader {
   private readonly configPath: string | undefined;
@@ -12,7 +13,7 @@ export class ConfigLoader {
   constructor() {
     this.configPath = this.getFlag('config');
     if (this.configPath) {
-      this.configPath = path.resolve(process.cwd(), this.configPath);
+      this.configPath = path.resolve(CWD, this.configPath);
     }
   }
 
@@ -25,10 +26,10 @@ export class ConfigLoader {
     let configFile = this.configPath;
 
     if (!configFile) {
-      const files = fs.readdirSync(process.cwd());
+      const files = fs.readdirSync(CWD);
 
       for (const file of files) {
-        const filePath = path.resolve(process.cwd(), file);
+        const filePath = path.resolve(CWD, file);
         const stat = fs.statSync(filePath);
 
         if (stat.isFile() && anymatch(['lumineer.config.{js,mjs}'], file)) {
