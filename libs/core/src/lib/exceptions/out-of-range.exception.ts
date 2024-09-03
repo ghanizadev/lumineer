@@ -1,5 +1,5 @@
 import * as gRPC from '@grpc/grpc-js';
-import { GrpcException } from './base.exception';
+import { ServerException } from './base.exception';
 
 /*
  * The operation was attempted past the valid range. E.g., seeking or reading
@@ -13,7 +13,7 @@ import { GrpcException } from './base.exception';
  * are iterating through a space can easily look for an `OUT_OF_RANGE` error to
  * detect when they are done.
  * */
-export class OutOfRangeException extends GrpcException {
+export class OutOfRangeException extends ServerException {
   constructor(message?: string) {
     super(gRPC.status.OUT_OF_RANGE, message);
   }

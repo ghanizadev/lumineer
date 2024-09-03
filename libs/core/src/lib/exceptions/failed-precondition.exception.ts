@@ -1,5 +1,5 @@
 import * as gRPC from '@grpc/grpc-js';
-import { GrpcException } from './base.exception';
+import { ServerException } from './base.exception';
 
 /*
  * The operation was rejected because the system is not in a state required
@@ -15,7 +15,7 @@ import { GrpcException } from './base.exception';
  * directory is non-empty, `FAILED_PRECONDITION` should be returned since the
  * client should not retry unless the files are deleted from the directory.
  * */
-export class FailedPreconditionException extends GrpcException {
+export class FailedPreconditionException extends ServerException {
   constructor(message?: string) {
     super(gRPC.status.FAILED_PRECONDITION, message);
   }

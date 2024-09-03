@@ -19,9 +19,8 @@ import createGrpcClient from './create-grpc-client';
 import { Duplex, Readable, Writable } from 'node:stream';
 
 jest.mock('yargs');
-jest.setTimeout(60_000);
 
-describe('Server', () => {
+describe('RPC Decorators', () => {
   beforeAll(() => {
     (yargs as any).mockImplementation(() => ({
       argv: {
