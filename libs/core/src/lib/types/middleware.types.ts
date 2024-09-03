@@ -27,3 +27,8 @@ export abstract class ClassMiddleware {
   protected readonly logger = new Logger('Middleware', 'bgYellow');
   abstract handle(context: MiddlewareContext): Promise<void> | void;
 }
+
+export type MiddlewareKind =
+  | FunctionMiddleware
+  | ClassMiddlewareType
+  | InstanceType<ClassMiddlewareType>;

@@ -25,7 +25,14 @@ export type ServerOptions = {
      * */
     useClass?: ClassConstructor;
   }[];
+  /*
+   * gRPC server credentials
+   * */
   credentials: gRPC.ServerCredentials;
+  /*
+   * Channel options
+   * */
+  channelOptions?: gRPC.ChannelOptions;
 };
 
 export type ServiceConfig = {
