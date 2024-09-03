@@ -10,4 +10,6 @@ export default {
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: '../../coverage/libs/core',
   setupFilesAfterEnv: ['./__tests__/setup.ts'],
+  collectCoverage: true,
+  coverageReporters: ['lcov'],
 } as Config;
