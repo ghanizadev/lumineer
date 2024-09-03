@@ -1,0 +1,25 @@
+name: Code Quality
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'libs/**'
+jobs:
+  core:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install dependencies
+        run: npm install
+      - name: Test and coverage
+        run: npx nx test core -- --runInBand --forceExit
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_CORE_TOKEN }}
+        with:
+          projectBaseDir: libs/core/
