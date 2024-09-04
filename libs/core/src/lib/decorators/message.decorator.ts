@@ -2,10 +2,17 @@ import { SERVICE_MESSAGE_TOKEN } from '../constants';
 import { RpcMessageType } from '../types';
 import * as _ from 'lodash';
 
+/**
+ * @category Types
+ * @hidden
+ * */
 export type TypeOptions = {
   typeName?: string;
 };
 
+/**
+ * @category Decorators
+ */
 export const Message = (options?: TypeOptions) => {
   return (target: { new (...args: any[]): {} }) => {
     let metadata: RpcMessageType =
@@ -25,6 +32,9 @@ export const Message = (options?: TypeOptions) => {
   };
 };
 
+/**
+ * @category Decorators
+ */
 export const Enum = (options?: TypeOptions) => {
   return (target: { new (...args: any[]): {} }) => {
     let metadata: RpcMessageType =

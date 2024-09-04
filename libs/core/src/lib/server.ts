@@ -44,6 +44,9 @@ const DEFAULT_CONFIG: LumineerConfig = {
   packageName: 'app',
 };
 
+/**
+ * @category Classes
+ * */
 export class Lumineer {
   private readonly services: Record<string, ServiceConfig> = {};
   private readonly plugins: GrpcPlugin[] = [];

@@ -1,7 +1,7 @@
 import * as gRPC from '@grpc/grpc-js';
 import { ServerException } from './base.exception';
 
-/*
+/**
  * The operation was rejected because the system is not in a state required
  * for the operation’s execution. For example, the directory to be deleted is
  * non-empty, a rmdir operation is applied to a non-directory, etc. Service
@@ -14,6 +14,8 @@ import { ServerException } from './base.exception';
  * state has been explicitly fixed. E.g., if a “rmdir” fails because the
  * directory is non-empty, `FAILED_PRECONDITION` should be returned since the
  * client should not retry unless the files are deleted from the directory.
+ *
+ * @category Exceptions
  * */
 export class FailedPreconditionException extends ServerException {
   constructor(message?: string) {
