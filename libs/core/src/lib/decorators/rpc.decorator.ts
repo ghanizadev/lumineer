@@ -35,6 +35,9 @@ const updateMessages = (type: any, typeInstance: any, target: any) => {
   Reflect.defineMetadata('service:messages', messages, target);
 };
 
+/**
+ * @ignore
+ * */
 export const rpcType = (options: RpcTypeOptions = {}) => {
   return (target: any, propertyKey: string) => {
     let serviceMetadata: RpcMetadata =
@@ -90,18 +93,30 @@ export const rpcType = (options: RpcTypeOptions = {}) => {
   };
 };
 
+/**
+ * @category Decorators
+ */
 export const UnaryCall = (options?: Partial<RpcOptions>) => {
   return rpcType(options);
 };
 
+/**
+ * @category Decorators
+ */
 export const ClientStreamCall = (options: Optional<RpcOptions, 'return'>) => {
   return rpcType({ ...options, stream: 'client' });
 };
 
+/**
+ * @category Decorators
+ */
 export const ServerStreamCall = (options: Optional<RpcOptions, 'argument'>) => {
   return rpcType({ ...options, stream: 'server' });
 };
 
+/**
+ * @category Decorators
+ */
 export const BidirectionalStreamCall = (options: RpcOptions) => {
   return rpcType({ ...options, stream: 'both' });
 };

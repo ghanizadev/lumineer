@@ -94,7 +94,7 @@ class Service {
 
 Bidirectional streams user the `@BidirectionalStreamCall()` decorator, and they act like a `Readable` and a `Writable` stream at the same time.
 
-The easiest way to handle these calls is to use the stream parameters, provided by [`@Stream()`](/docs/api/decorators/parameter-decorators/stream). 
+The easiest way to handle these calls is to use the stream parameters, provided by [`@Stream()`](#). 
 
 ### Example
 

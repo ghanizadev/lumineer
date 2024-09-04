@@ -43,20 +43,21 @@ const config = {
     ({
       navbar: {
         title: 'Lumineer',
-        logo: {
-          alt: 'Lumineer logo',
-          src: 'img/logo.svg',
-        },
+        // logo: {
+        //   alt: 'Lumineer logo',
+        //   src: 'img/logo.svg',
+        // },
         items: [
+          // TODO: Add guides
+          // {
+          //   type: 'doc',
+          //   docId: 'documentation/overview',
+          //   position: 'left',
+          //   label: 'Documentation',
+          // },
           {
             type: 'doc',
-            docId: 'documentation/overview',
-            position: 'left',
-            label: 'Documentation',
-          },
-          {
-            type: 'doc',
-            docId: 'api/classes/lumineer',
+            docId: 'api/index',
             position: 'left',
             label: 'API',
           },
@@ -73,10 +74,11 @@ const config = {
           {
             title: 'Docs',
             items: [
-              {
-                label: 'Documentation',
-                to: '/docs/documentation/overview',
-              },
+              // TODO: Add guides
+              // {
+              //   label: 'Documentation',
+              //   to: '/docs/documentation/overview',
+              // },
               {
                 label: 'API',
                 to: '/docs/api',

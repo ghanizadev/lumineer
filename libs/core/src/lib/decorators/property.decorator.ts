@@ -1,31 +1,54 @@
-import { SERVICE_MESSAGE_TOKEN } from '../constants';
-import { RpcMessageType, RpcProperty, RpcScalar } from '../types/message.types';
 import * as _ from 'lodash';
-import { ClassConstructor } from '../types';
 
+import { SERVICE_MESSAGE_TOKEN } from '../constants';
+import {
+  RpcMessageType,
+  RpcProperty,
+  RpcScalar,
+  ClassConstructor,
+} from '../types';
+
+/**
+ * @category Types
+ * */
 export type DecoratorFunction = (target: any, propertyKey: string) => void;
 
+/**
+ * @category Types
+ * */
 export type TransformFunction<T = any> = (
   value: T,
   options: PropertyTypeOptions
 ) => T;
 
+/**
+ * @category Types
+ * */
 export type PropertyTypeOptions = {
   repeated?: boolean;
   optional?: boolean;
 };
 
+/**
+ * @category Types
+ * */
 export type PropertyTypeMapOptions = {
   key: Omit<RpcScalar, 'float' | 'double' | 'bytes'>;
   value: RpcScalar | { new (...args: any[]): {} };
 };
 
+/**
+ * @category Types
+ * */
 export type PropertyRefOptions = {
   blockScoped?: boolean;
   repeated?: boolean;
   optional?: boolean;
 };
 
+/**
+ * @category Decorators
+ */
 export function PropertyType(
   type: 'string',
   options?: PropertyTypeOptions,
@@ -142,6 +165,9 @@ function propertyTypeImpl(
   Reflect.defineMetadata(SERVICE_MESSAGE_TOKEN, metadata, target);
 }
 
+/**
+ * @category Decorators
+ */
 export const MessageRef = (
   ref: ClassConstructor,
   options: PropertyRefOptions = {}
@@ -185,6 +211,9 @@ export const MessageRef = (
   };
 };
 
+/**
+ * @category Decorators
+ */
 export const OneOf = (typeName: string) => {
   return (target: any, propertyKey: string) => {
     let metadata: RpcMessageType = Reflect.getMetadata(

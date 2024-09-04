@@ -1,0 +1,13 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "plugin": ["typedoc-plugin-markdown", "./apps/docs/plugins/typedoc.js"],
+  "entryPoints": ["./libs/core/src/index.ts"],
+  "tsconfig": "./libs/core/tsconfig.lib.json",
+  "out": "./typedoc",
+  "hidePageHeader": true,
+  "hideBreadcrumbs": true,
+  "hidePageTitle": true,
+  "hideGroupHeadings": true,
+  "useCodeBlocks": true,
+  "expandParameters": true
+}

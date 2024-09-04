@@ -2,6 +2,9 @@ import * as _ from 'lodash';
 import { SERVICE_MIDDLEWARE_TOKEN } from '../constants';
 import { FunctionMiddleware, ClassMiddlewareType } from '../types';
 
+/**
+ * @category Decorators
+ */
 export const Middleware = (
   ...middleware: (
     | FunctionMiddleware
