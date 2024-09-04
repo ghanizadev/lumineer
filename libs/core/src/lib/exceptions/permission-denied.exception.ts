@@ -1,7 +1,7 @@
 import * as gRPC from '@grpc/grpc-js';
 import { ServerException } from './base.exception';
 
-/*
+/**
  * The caller does not have permission to execute the specified operation.
  * `PERMISSION_DENIED` must not be used for rejections caused by exhausting
  * some resource (use `RESOURCE_EXHAUSTED` instead for those errors).
@@ -9,6 +9,8 @@ import { ServerException } from './base.exception';
  * (use `UNAUTHENTICATED` instead for those errors). This error code does not
  * imply the request is valid or the requested entity exists or satisfies other
  * pre-conditions.
+ *
+ * @category Exceptions
  * */
 export class PermissionDeniedException extends ServerException {
   constructor(message?: string) {

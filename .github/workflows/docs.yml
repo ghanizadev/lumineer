@@ -2,6 +2,8 @@ name: Deploy documentation
 
 on:
   push:
+    branches:
+      - main
     tags:
       - v*.*.*
 
@@ -27,6 +29,9 @@ jobs:
 
       - name: Install Dependencies
         run: npm ci
+
+      - name: Build TypeDoc
+        run: npx typedoc
 
       - name: Build project
         run: npx nx build docs

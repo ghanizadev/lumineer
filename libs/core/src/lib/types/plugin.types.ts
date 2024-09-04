@@ -2,8 +2,14 @@ import type { Server } from '@grpc/grpc-js';
 import type { PackageDefinition } from '@grpc/proto-loader';
 import type { DependencyContainer } from 'tsyringe';
 
+/**
+ * @category Types
+ * */
 export type HookStage = keyof GrpcPlugin;
 
+/**
+ * @category Types
+ * */
 export type HookContext = {
   dependencyContainer: DependencyContainer;
   server: Server;
@@ -15,8 +21,14 @@ export type HookContext = {
   };
 };
 
+/**
+ * @category Types
+ * */
 export type HookHandler = (context: HookContext) => Promise<void> | void;
 
+/**
+ * @category Classes
+ * */
 export abstract class GrpcPlugin {
   public async onInit(context: HookContext) {}
   public async preBind(context: HookContext) {}

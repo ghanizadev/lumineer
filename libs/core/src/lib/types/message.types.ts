@@ -1,3 +1,6 @@
+/**
+ * @category Types
+ * */
 export type RpcScalar =
   | 'unknown'
   | 'double'
@@ -19,6 +22,9 @@ export type RpcScalar =
   | 'sint32'
   | 'sint64';
 
+/**
+ * @category Types
+ * */
 export type RpcMessageType = {
   typeName?: string;
   type?: 'message' | 'enum';
@@ -29,6 +35,9 @@ export type RpcMessageType = {
   oneofs?: Record<string, string[]>;
 };
 
+/**
+ * @category Types
+ * */
 export type RpcProperty = {
   propertyName: string;
   type?: RpcScalar | 'map';
@@ -38,6 +47,9 @@ export type RpcProperty = {
   ref?: string;
 };
 
+/**
+ * @category Types
+ * */
 export type RpcMetadata = {
   rpcName: string;
   clientStream?: boolean;

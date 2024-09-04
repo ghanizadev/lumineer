@@ -1,0 +1,256 @@
+[
+  {
+    "title": "Decorators",
+    "children": [
+      { "title": "Middleware", "kind": 64, "path": "functions/Middleware.md" }
+    ]
+  },
+  {
+    "title": "Other",
+    "children": [
+      {
+        "title": "AbortedException",
+        "kind": 128,
+        "path": "classes/AbortedException.md"
+      },
+      {
+        "title": "AlreadyExistsException",
+        "kind": 128,
+        "path": "classes/AlreadyExistsException.md"
+      },
+      {
+        "title": "ChannelCredentials",
+        "kind": 128,
+        "path": "classes/ChannelCredentials.md"
+      },
+      {
+        "title": "ClassMiddleware",
+        "kind": 128,
+        "path": "classes/ClassMiddleware.md"
+      },
+      {
+        "title": "DataLossException",
+        "kind": 128,
+        "path": "classes/DataLossException.md"
+      },
+      {
+        "title": "DeadlineExceededException",
+        "kind": 128,
+        "path": "classes/DeadlineExceededException.md"
+      },
+      {
+        "title": "FailedPreconditionException",
+        "kind": 128,
+        "path": "classes/FailedPreconditionException.md"
+      },
+      { "title": "GrpcPlugin", "kind": 128, "path": "classes/GrpcPlugin.md" },
+      {
+        "title": "InternalException",
+        "kind": 128,
+        "path": "classes/InternalException.md"
+      },
+      {
+        "title": "InvalidArgumentException",
+        "kind": 128,
+        "path": "classes/InvalidArgumentException.md"
+      },
+      { "title": "Lumineer", "kind": 128, "path": "classes/Lumineer.md" },
+      {
+        "title": "MetadataContent",
+        "kind": 128,
+        "path": "classes/MetadataContent.md"
+      },
+      {
+        "title": "NotFoundException",
+        "kind": 128,
+        "path": "classes/NotFoundException.md"
+      },
+      {
+        "title": "OutOfRangeException",
+        "kind": 128,
+        "path": "classes/OutOfRangeException.md"
+      },
+      {
+        "title": "PermissionDeniedException",
+        "kind": 128,
+        "path": "classes/PermissionDeniedException.md"
+      },
+      {
+        "title": "ResourceExhaustedException",
+        "kind": 128,
+        "path": "classes/ResourceExhaustedException.md"
+      },
+      {
+        "title": "ServerCredentials",
+        "kind": 128,
+        "path": "classes/ServerCredentials.md"
+      },
+      {
+        "title": "UnauthenticatedException",
+        "kind": 128,
+        "path": "classes/UnauthenticatedException.md"
+      },
+      {
+        "title": "UnimplementedException",
+        "kind": 128,
+        "path": "classes/UnimplementedException.md"
+      },
+      {
+        "title": "UnknownException",
+        "kind": 128,
+        "path": "classes/UnknownException.md"
+      },
+      {
+        "title": "ClassConstructor",
+        "kind": 2097152,
+        "path": "type-aliases/ClassConstructor.md"
+      },
+      {
+        "title": "ClassMiddlewareType",
+        "kind": 2097152,
+        "path": "type-aliases/ClassMiddlewareType.md"
+      },
+      {
+        "title": "DecoratorFunction",
+        "kind": 2097152,
+        "path": "type-aliases/DecoratorFunction.md"
+      },
+      {
+        "title": "FunctionMiddleware",
+        "kind": 2097152,
+        "path": "type-aliases/FunctionMiddleware.md"
+      },
+      {
+        "title": "HookContext",
+        "kind": 2097152,
+        "path": "type-aliases/HookContext.md"
+      },
+      {
+        "title": "HookHandler",
+        "kind": 2097152,
+        "path": "type-aliases/HookHandler.md"
+      },
+      {
+        "title": "HookStage",
+        "kind": 2097152,
+        "path": "type-aliases/HookStage.md"
+      },
+      {
+        "title": "LumineerConfig",
+        "kind": 2097152,
+        "path": "type-aliases/LumineerConfig.md"
+      },
+      {
+        "title": "MiddlewareContext",
+        "kind": 2097152,
+        "path": "type-aliases/MiddlewareContext.md"
+      },
+      {
+        "title": "MiddlewareHandler",
+        "kind": 2097152,
+        "path": "type-aliases/MiddlewareHandler.md"
+      },
+      {
+        "title": "Optional",
+        "kind": 2097152,
+        "path": "type-aliases/Optional.md"
+      },
+      {
+        "title": "PropertyRefOptions",
+        "kind": 2097152,
+        "path": "type-aliases/PropertyRefOptions.md"
+      },
+      {
+        "title": "PropertyTypeMapOptions",
+        "kind": 2097152,
+        "path": "type-aliases/PropertyTypeMapOptions.md"
+      },
+      {
+        "title": "PropertyTypeOptions",
+        "kind": 2097152,
+        "path": "type-aliases/PropertyTypeOptions.md"
+      },
+      {
+        "title": "RpcMessageType",
+        "kind": 2097152,
+        "path": "type-aliases/RpcMessageType.md"
+      },
+      {
+        "title": "RpcMetadata",
+        "kind": 2097152,
+        "path": "type-aliases/RpcMetadata.md"
+      },
+      {
+        "title": "RpcOptions",
+        "kind": 2097152,
+        "path": "type-aliases/RpcOptions.md"
+      },
+      {
+        "title": "RpcProperty",
+        "kind": 2097152,
+        "path": "type-aliases/RpcProperty.md"
+      },
+      {
+        "title": "RpcScalar",
+        "kind": 2097152,
+        "path": "type-aliases/RpcScalar.md"
+      },
+      {
+        "title": "RpcTypeOptions",
+        "kind": 2097152,
+        "path": "type-aliases/RpcTypeOptions.md"
+      },
+      {
+        "title": "ServerOptions",
+        "kind": 2097152,
+        "path": "type-aliases/ServerOptions.md"
+      },
+      {
+        "title": "ServiceConfig",
+        "kind": 2097152,
+        "path": "type-aliases/ServiceConfig.md"
+      },
+      {
+        "title": "TransformFunction",
+        "kind": 2097152,
+        "path": "type-aliases/TransformFunction.md"
+      },
+      {
+        "title": "TypeOptions",
+        "kind": 2097152,
+        "path": "type-aliases/TypeOptions.md"
+      },
+      {
+        "title": "BidirectionalStreamCall",
+        "kind": 64,
+        "path": "functions/BidirectionalStreamCall.md"
+      },
+      {
+        "title": "ClientStreamCall",
+        "kind": 64,
+        "path": "functions/ClientStreamCall.md"
+      },
+      { "title": "Enum", "kind": 64, "path": "functions/Enum.md" },
+      { "title": "Injectable", "kind": 64, "path": "functions/Injectable.md" },
+      { "title": "Message", "kind": 64, "path": "functions/Message.md" },
+      { "title": "MessageRef", "kind": 64, "path": "functions/MessageRef.md" },
+      { "title": "Metadata", "kind": 64, "path": "functions/Metadata.md" },
+      { "title": "OneOf", "kind": 64, "path": "functions/OneOf.md" },
+      { "title": "Payload", "kind": 64, "path": "functions/Payload.md" },
+      {
+        "title": "PropertyType",
+        "kind": 64,
+        "path": "functions/PropertyType.md"
+      },
+      {
+        "title": "ServerStreamCall",
+        "kind": 64,
+        "path": "functions/ServerStreamCall.md"
+      },
+      { "title": "Service", "kind": 64, "path": "functions/Service.md" },
+      { "title": "Singleton", "kind": 64, "path": "functions/Singleton.md" },
+      { "title": "Stream", "kind": 64, "path": "functions/Stream.md" },
+      { "title": "UnaryCall", "kind": 64, "path": "functions/UnaryCall.md" }
+    ]
+  }
+]
