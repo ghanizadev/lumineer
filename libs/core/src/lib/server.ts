@@ -21,6 +21,7 @@ import {
   ServiceConfig,
   RpcMetadata,
   LumineerConfig,
+  MiddlewareKind,
 } from './types';
 import {
   SERVICE_MIDDLEWARE_TOKEN,
@@ -37,6 +38,7 @@ import { EventEmitter } from 'node:events';
 const DEFAULT_OPTIONS: Partial<ServerOptions> = {
   providers: [],
   credentials: gRPC.ServerCredentials.createInsecure(),
+  channelOptions: {},
 };
 
 const DEFAULT_CONFIG: LumineerConfig = {
@@ -56,11 +58,7 @@ export class Lumineer {
   private readonly logger: BaseLogger;
 
   private lumineerConfig: LumineerConfig;
-  private globalMiddlewares: (
-    | FunctionMiddleware
-    | ClassMiddlewareType
-    | InstanceType<ClassMiddlewareType>
-  )[] = [];
+  private globalMiddlewares: MiddlewareKind[] = [];
   private options: ServerOptions;
   private packageDefinition: protoLoader.PackageDefinition;
   private grpcObject: gRPC.GrpcObject;
@@ -73,7 +71,7 @@ export class Lumineer {
     this.updateOptions(options);
     this.logger = new BaseLogger('Server');
     this.dependencyContainer = container.createChildContainer();
-    this.server = new gRPC.Server();
+    this.server = new gRPC.Server({ ...options.channelOptions! });
     this.events = new EventEmitter();
 
     if (this.getFlag('dryRun')) {

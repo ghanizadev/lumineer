@@ -29,6 +29,10 @@ export type ServerOptions = {
    * Server credentials to be used by the core gRPC Server
    * */
   credentials: gRPC.ServerCredentials;
+  /*
+   * Channel options
+   * */
+  channelOptions?: gRPC.ChannelOptions;
 };
 
 /**
