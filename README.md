@@ -16,9 +16,24 @@ npm install --save @lumineer/core
 
 ### Minimal setup
 
-Create the service definition:
+Define your configuration.
+
+`lumineer.config.js`:
+
+```javascript
+/** @type {import('@lumineer/core').LumineerConfig}  */
+module.exports = {
+  packageName: 'com.package.my',
+};
+```
+
+Create the service definition
+
+`service.ts`:
 
 ```typescript
+import { Message, PropertyType, UnaryCall, Service } from "@lumineer/core";
+
 @Message()
 class CreateUser {
   @PropertyType('string')
@@ -28,7 +43,7 @@ class CreateUser {
   email: string;
 
   @PropertyType('string')
-  passoword: string;
+  password: string;
 }
 
 @Message()
@@ -42,37 +57,37 @@ class User {
   @PropertyType('string')
   email: string;
 
-  @PropertyType('DateTime')
+  @PropertyType('string')
   createdAt: Date;
 
-  @PropertyType('DateTime')
+  @PropertyType('string')
   updatedAt: Date;
 }
 
 @Service()
-class UserService {
-  @RPC()
-  @ArgumentType(CreateUser)
-  @ReturnType(User)
+export class UserService {
+  @UnaryCall({ argument: CreateUser, return: User })
   private async CreateUser(@BodyParam() requestBody: CreateUser): Promise<User> {
     const user = await this.repository.createUser(requestBody);
     return user;
   }
 }
 ```
+
 And then start the server:
 
+`main.ts`:
+
 ```typescript
+import { Lumineer, UnaryCall, Service, ServerCredentials } from "@lumineer/core";
+import { UserService } from "./service";
+
 const PORT = 50051
 
 async function run() {
-  const server = new GRPCServer({
+  const server = new Lumineer({
     services: [UserService],
-    config: {
-      logger: true,
-      credentials: ServerCredentials.createInsecure(),
-      packageName: 'com.ghanizadev.lumineer',
-    },
+    credentials: ServerCredentials.createInsecure(),
   });
 
   await server.run('0.0.0.0:' + PORT);
@@ -85,8 +100,10 @@ The service is now available at `localhost:50051`.
 
 ### Documentation
 
-Check the package [documentation](https://cybaline.ghanizadev.com) for a more detailed information
+Check the package [documentation](https://lumineer.ghanizadev.com) for a more detailed information
 
 ## License
+
+MIT License Copyright (c) 2024 Lumineer
 
 ---
