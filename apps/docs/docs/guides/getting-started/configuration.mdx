@@ -1,0 +1,33 @@
+---
+title: Configuration
+sidebar_position: 2
+---
+
+:::info
+
+Check the [`lumineer.config.js` API Reference](#) for more information.
+
+:::
+
+A file in the project root is used to share the configuration among project, plugins and CLI tools.
+
+A configuration file looks like:
+
+```javascript title="lumineer.config.js"
+/** @type {import('@lumineer/core').LumineerConfig}  */
+module.exports = {
+  packageName: 'app',
+  configFolder: './.lumineer'
+};
+```
+
+The default export can be an `object` as it shows on the example above or a `(async) function` which return the configuration.
+
+The configuration object can include:
+
+| Property | Type | Description | Default |
+| ------------------------- | ---- | ----------- | ------- |
+| `packageName` | `string` |The name given to your package. It will be used to defined the home path of your services | `app`|
+| `configFolder` | `string` | The name of the folder user by CLI, plugins and the application itself to store generated files used in production builds | `.lumineer` |
+
+<small>* : required fields</small>
