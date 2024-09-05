@@ -1,0 +1,314 @@
+---
+title: Getting Started
+sidebar_position: 2
+---
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+In this section we will cover how to install Lumineer, how to create a simple service, and later see how can we build and run this service.
+
+Let's start by creating our project folder.
+
+## Creating a simple project
+
+### Installing the dependencies
+
+Create a project in an empty folder, here we will call it `say-hello`:
+
+```bash
+# Create the project folder
+mkdir say-hello
+
+# Move in to the folder
+cd say-hello
+
+# Start a project with default values
+npm init -y
+```
+
+:::info
+
+Lumineer requires Node ^18
+
+:::
+
+After initialising the project, let's install our dependencies:
+
+<Tabs groupId="package-manager">
+  <TabItem value="npm" label="NPM">
+    ```bash
+    npm install --save @lumineer/core reflect-metadata
+    ```
+
+    ```bash
+    npm install --save-dev typescript
+    ```
+  </TabItem>
+  <TabItem value="yarn" label="Yarn">
+    ```bash
+    yarn add @lumineer/core reflect-metadata
+    ```
+
+    ```bash
+    yarn add -D typescript
+    ```
+  </TabItem>
+  <TabItem value="pnpm" label="PNPM">
+    ```bash
+    pnpm add @lumineer/core reflect-metadata
+    ```
+
+    ```bash
+    pnpm add -D typescript
+    ```
+  </TabItem>
+</Tabs>
+
+### Configuring Typescript
+
+Create a `tsconfig.json` new file in the project root, and add the following:
+
+```json title="tsconfig.json"
+{
+  "compilerOptions": {
+    "target": "es2016",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "module": "commonjs",
+    "rootDir": "./src",
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "./dist",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+    "strictPropertyInitialization": false
+  },
+  "exclude": ["*/.spec.ts", "*/dist/"]
+}
+
+```
+
+After saving the file, we are ready to create our first service, the `SayHelloService`.
+
+### Creating the service
+
+Our service will be really simple, we will create a method, called `SayHello` which will receive a `name` and return a greeting `message` containing the name.
+
+We can start by defining our service class, like:
+
+```typescript title="src/services/say-hello/say-hello.service.ts"
+import { Service } from "@lumineer/core";
+
+@Service()
+export class SayHelloService {}
+
+```
+
+This class would work normally, but it does not make sense to create a service without methods to call. To fix this, lets create our `SayHello` method:
+
+
+```typescript title="src/services/say-hello/say-hello.service.ts"
+import { Service, UnaryCall } from "@lumineer/core";
+
+@Service()
+export class SayHelloService {
+  @UnaryCall()
+  private SayHello() {
+    return "Hello world!"
+  }
+}
+
+```
+
+Here, we are creating an unary call to handle our `SayHello` method. This is because we will have an input and generate a single output. Unary calls are the simplest way to define a RPC, but there are more patterns which we will discuss later.
+
+Following the logic, we will need to define the message format which this RPC expects, the same for the return value. To solve this problem, we can use the `@Message()` decorator and define our message classes:
+
+```typescript title="src/services/say-hello/messages/say-hello-request.message.ts"
+import { Message, PropertyType } from "@lumineer/core";
+
+@Message()
+export class SayHelloRequest {
+  @PropertyType('string')
+  name: string;
+}
+
+```
+
+```typescript title="src/services/say-hello/messages/say-hello-response.message.ts"
+import { Message, PropertyType } from "@lumineer/core";
+
+@Message()
+export class SayHelloResponse {
+  @PropertyType('string')
+  message: string;
+}
+
+```
+
+These two messages will be our request and response for our `SayHello` method. There we made use of the `@Message()` decorator to define our message and the `PropertyType()` decorator to define the type of each property inside our messages, in this case, `string`.
+
+Now we can update our method to make use of the messages:
+
+```typescript title="src/services/say-hello/say-hello.service.ts"
+import { Service, UnaryCall, Payload } from "@lumineer/core";
+
+import { SayHelloRequest } from "./messages/say-hello-request.message.ts"
+import { SayHelloResponse } from "./messages/say-hello-response.message.ts"
+
+@Service()
+export class SayHelloService {
+
+  @UnaryCall({ argument: SayHelloRequest, return: SayHelloResponse })
+  private SayHello(@Payload() payload: SayHelloRequest): SayHelloResponse {
+    return {
+      message: `Hello ${payload.name}!`
+    }
+  }
+}
+```
+
+After importing the messages, we can define the argument and the return type inside the `@UnaryCall()` decorator. For unary calls, either argument or return values are optional, but for our example, we need some information to process.
+
+The `@Payload()` decorator magically loads the request body into our method, this is used just as type as this moment, the value of the payload argument **is not** an instance of `SayHelloRequest`.
+
+Finally, just like the `payload` argument, the returned value can be a plain object containing the `message` property. We could return a class instance, but in this case, we care only about the schema, so it is safe to use as return type here.
+
+Now we need to configure our server.
+
+### Configuring the server
+
+To do so, let create a `lumineer.config.js` file in the project root, right next to the `package.json` file:
+
+```javascript title="lumineer.config.js"
+/** @type {import('@lumineer/core').LumineerConfig}  */
+module.exports = {
+  packageName: 'app',
+  configFolder: './.lumineer'
+};
+```
+
+This will tell to our application and CLI tools what should be used to create our `protobuf` files among other configurations.
+
+Lastly, we can create our main function to run the application:
+
+```typescript title="src/main.ts"
+import 'reflect-metadata';
+
+import { Lumineer, ServerCredentials } from "@lumineer/core"
+import { SayHelloService } from './services/say-hello/say-hello.service';
+
+async function main() {
+  const server = new Lumineer({
+    services: [SayHelloService],
+    credentials: ServerCredentials.createInsecure(),
+  });
+
+  await server.run('0.0.0.0:50051');
+}
+
+main();
+
+```
+
+:::info
+
+This library uses the `reflect-metadata` package, and it should be the first import in your project. In this example, we are adding the import at the top of our `src/main.ts` file, which is our entry file.
+
+:::
+
+### Project structure
+
+The final project structure should look like this:
+
+```bash
+say-hello
+├── .lumineer
+├── src
+│   ├── services
+│   │   ├── say-hello
+│   │   │   ├── firsay-hello.service.ts
+│   │   │   └── messages
+│   │   │       ├── say-hello-request.message.ts
+│   │   │       └── say-hello-response.message.ts
+│   └── main.ts
+├── package.json
+├── README.md
+├── lumineer.config.js
+└── tsconfig.json
+```
+
+This is also our recommended structure, but you have the flexibility to change it. Check the [LumineerConfig API Reference](/docs/api/types/LumineerConfig) for further information.
+
+And done! this is our service, and now you are ready to run the development server and build.
+
+## Running the project
+
+To run the project on your machine, use the development server, it supports hot-reloading:
+
+<Tabs groupId="package-manager">
+  <TabItem value="npm" label="NPM">
+    ```bash
+    npx lumineer dev
+    ```
+  </TabItem>
+  <TabItem value="yarn" label="Yarn">
+    ```bash
+    yarn lumineer dev
+    ```
+  </TabItem>
+  <TabItem value="pnpm" label="PNPM">
+    ```bash
+    pnpx lumineer dev
+    ```
+  </TabItem>
+</Tabs>
+
+After this you can access the service via `localhost:50051` using a client like [Postman](#) or [Insomnia](#).
+
+:::info
+
+To use the API client, you will need the `.proto` file containing the service definition. You can find this inside the generated folder `.lumineer` at the project root, the file name should be `{packageName}.proto`, as defined in the `lumineer.config.js` configuration file. In our example, it will be `.lumineer/app.proto`.
+
+:::
+
+:::warning
+
+This should not be used in production! See [Going to production](/docs/documentation/deployment/going-to-production)
+
+:::
+
+## Building the project
+
+To build the project, simply run the build command:
+
+<Tabs groupId="package-manager">
+  <TabItem value="npm" label="NPM">
+    ```bash
+    npx lumineer build
+    ```
+  </TabItem>
+  <TabItem value="yarn" label="Yarn">
+    ```bash
+    yarn lumineer build
+    ```
+  </TabItem>
+  <TabItem value="pnpm" label="PNPM">
+    ```bash
+    pnpx lumineer build
+    ```
+  </TabItem>
+</Tabs>
+
+This will create a production version of your project by default. If you wish to use development, pass an optional `--dev` flag to this command.
+
+:::info
+
+Although this could be deployed to production, a few measurements should be taken into consideration. Please refer to the [Deployment](/docs/documentation/deployment/going-to-production) section before releasing your app.
+
+:::
+
+See more about the [Lumineer CLI here](/docs/category/cli).
