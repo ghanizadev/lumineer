@@ -48,13 +48,12 @@ const config = {
         //   src: 'img/logo.svg',
         // },
         items: [
-          // TODO: Add guides
-          // {
-          //   type: 'doc',
-          //   docId: 'documentation/overview',
-          //   position: 'left',
-          //   label: 'Documentation',
-          // },
+          {
+            type: 'doc',
+            docId: 'guides/overview',
+            position: 'left',
+            label: 'Documentation',
+          },
           {
             type: 'doc',
             docId: 'api/index',
@@ -74,11 +73,10 @@ const config = {
           {
             title: 'Docs',
             items: [
-              // TODO: Add guides
-              // {
-              //   label: 'Documentation',
-              //   to: '/docs/documentation/overview',
-              // },
+              {
+                label: 'Documentation',
+                to: '/docs/guides/overview',
+              },
               {
                 label: 'API',
                 to: '/docs/api',
@@ -91,10 +89,6 @@ const config = {
               {
                 label: 'Stack Overflow',
                 href: 'https://stackoverflow.com/questions/tagged/lumineer',
-              },
-              {
-                label: 'Discord',
-                href: 'https://discordapp.com/invite/docusaurus',
               },
             ],
           },
