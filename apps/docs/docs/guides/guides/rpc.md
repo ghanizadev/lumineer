@@ -102,7 +102,7 @@ class Service {
 
 ### Bidirectional stream
 
-Bidirectional RPCs use the [`@BidirectionalStreamCall()`](/docs/api/decorators/BidirectionalStreamCall.md) decorator, it relies on [`Duplex`](https://nodejs.org/api/stream.html#duplex-streams) streams (it acts like a `Readable` and a `Writable` stream at the same time) to handle these calls. Use the stream parameters value, provided by [`@Stream()`](/docs/api/decorators/Stream/md). 
+Bidirectional RPCs use the [`@BidirectionalStreamCall()`](/docs/api/decorators/BidirectionalStreamCall.md) decorator, it relies on [`Duplex`](https://nodejs.org/api/stream.html#duplex-streams) streams (it acts like a `Readable` and a `Writable` stream at the same time) to handle these calls. Use the stream parameters value, provided by [`@Stream()`](/docs/api/decorators/Stream.md). 
 
 #### Example
 
@@ -128,7 +128,7 @@ class Service {
 
 ### Payload
 
-Payload is the data that may come with a call if the `argument` option was supplied to the [call decorator](/docs/documentation/guides/rpc/call).
+Payload is the data that may come with a call if the `argument` option was supplied to the call decorator.
 
 To access the request payload, use the `@Payload()` decorator.
 
