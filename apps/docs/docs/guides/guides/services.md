@@ -1,8 +1,13 @@
 ---
-title: Service
+title: Services
+sidebar_position: 1
 ---
 
-A minimal service configuration is:
+In this guide we will learn how to make your first services with Lumineer, from bottom up.
+
+Services are the base of our application, here we can define the handler methods of our RPCs and make use of our messages and other structures
+
+For example, a minimal service configuration could be defined as:
 
 ```typescript
 import {
@@ -36,10 +41,10 @@ class User {
   @PropertyType('string')
   email: string;
 
-  @PropertyType('DateTime')
+  @PropertyType('string')
   createdAt: Date;
 
-  @PropertyType('DateTime')
+  @PropertyType('string')
   updatedAt: Date;
 }
 
@@ -52,7 +57,7 @@ class UserService {
 }
 ```
 
-This can be translated to a `protobuf` file like:
+And this can be translated to a `protobuf` file like:
 
 ```protobuf
 syntax = "proto3";
@@ -79,11 +84,12 @@ message User {
 
 ```
 
-Optionally, you can pass an alternative name to be used by this class:
+Services are instantiated when the server starts, and it will be reused during the execution. It uses a dependency injection container, which allows automatically instancing classes. 
+
+Optionally, we can override the service name using the optional argument of the `@Service()` decorator:
 
 ```typescript
-@Service('CustomName')
-class UserService {
-// [...]
-}
+@Service({ name: 'UserService' })
+class UserServiceV2 {}
+
 ```
