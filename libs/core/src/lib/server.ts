@@ -233,6 +233,7 @@ export class Lumineer {
       'server' | 'dependencyContainer' | 'packageDefinition'
     >
   ) {
+    this.events.emit(stage, context);
     await Promise.all(
       this.plugins.map((pluginInstance) =>
         pluginInstance[stage].call(pluginInstance, {
